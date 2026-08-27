@@ -1,0 +1,84 @@
+JRL Messages 2.3.0 - Wake Mac, legible composer icons, scaled chrome
+
+The missing-texts diagnosis
+Texts sometimes exist on the iPhone but never reach this app, and no
+Refresh, Recover, or app restart helps, yet sending any message makes
+everything flood in with correct timestamps. The cause sits upstream of
+Windows: Messages on the Mac goes quiet and Apple holds the incoming
+texts back from the Mac entirely, so BlueBubbles has nothing to serve.
+Sending cures it by accident, because an AppleScript send activates
+Messages and forces it to reconnect to Apple.
+
+Wake Mac
+- A new full-width accent button below Recover performs that cure on
+  purpose. It calls the BlueBubbles route POST /api/v1/mac/imessage/restart,
+  which quits and reopens Messages on the Mac. Messages reconnects to
+  Apple, and Apple delivers everything it was holding, in order, with
+  original timestamps. Nothing is sent to anyone; nothing local changes.
+- After the Mac accepts, the footer watches for about a minute, forces
+  re-checks at 4, 9, 16, 30, and 50 seconds on top of the normal 3-second
+  poll, shows the recovered count live, and closes with an honest total,
+  including "the Mac was holding nothing back" when that is the truth.
+- The button refuses, with an explanation, while one of your own messages
+  is queued or on the wire, because quitting Messages mid-send could
+  interrupt a delivery to a client. Failed sends waiting for your click do
+  not block it.
+- A server too old for the route produces a clear message naming the fix.
+  Ctrl+Shift+M is the shortcut. Recover cancels any wake in progress, and
+  stale wake timers or callbacks from a retired backend can never land.
+- Boundary, unchanged and worth restating: Wake Mac revives an idle
+  Messages app. It cannot wake a Mac that is actually asleep or offline;
+  the call itself will fail visibly in that case.
+
+Legible, scale-true composer
+- The attach and emoji icons were drawn at 16 and 17 pixels inside their
+  buttons; that is why they were barely visible. They are now 22 pixels
+  inside 38-pixel circular targets with proper hover, pressed, and focus
+  states, and every dimension follows the text-size setting, reaching
+  33 pixels inside 57-pixel targets at Largest.
+- The send circle grew to match, and the conversation header's refresh
+  and group buttons were harmonized to the same visual weight.
+
+Sleeker, scale-aware chrome
+- Corner radii, input paddings, scrollbar tracks, menu and tooltip
+  paddings now all scale with the chosen text size instead of staying
+  fixed while the text grows around them.
+- The pane divider highlights in the accent when hovered, scrollbar
+  handles tint toward the accent on hover in both directions, and
+  pressed buttons use the accent-blended surface.
+
+Fixed: silently dropped button styling
+- A doubled closing brace inside the Recover button's stylesheet made Qt
+  silently discard its disabled and focus rules ever since 2.2.0; the
+  console warning was invisible under pythonw. Fixed, covered by a
+  regression test that scans every UI file for the pattern, and the
+  offscreen harness now fails on any stylesheet parse warning at all.
+
+Hardening
+- The 15-second watchdog now also detects a dead send, download, or push
+  worker, not only a dead reconciler, and performs the usual automatic
+  recovery; a silently dead sender would otherwise strand queued texts.
+- The wake worker participates in the same retired-backend lifecycle as
+  every other worker: its HTTP client stays alive until the bounded call
+  finishes, and worker references are never dropped while running.
+
+Validation
+- 43 automated tests pass: the full 2.2.0 suite plus new coverage for the
+  restart route and password, 404 mapping, the outbox activity gate, the
+  wake wiring contracts, composer icon sizing, and the stylesheet
+  regression.
+- Two offscreen GUI harnesses pass: full window construction at Default
+  and Largest scales with exact pixel checks, the complete wake state
+  machine, and a live end-to-end run of the real worker thread against a
+  mock BlueBubbles server on both the success and 404 paths.
+- All Python modules compile.
+
+Upgrade
+1. Close JRL Messages.
+2. Extract this ZIP over the existing jrl-messages folder and allow
+   Windows to replace files. AppData settings and the local message
+   database are separate and are not removed.
+3. Run install.bat once.
+4. Start JRL-Messages.bat and confirm the title bar shows v2.3.0.
+5. When texts you can see on the iPhone have not arrived here, press
+   Wake Mac or Ctrl+Shift+M and watch the footer report what came in.

@@ -1,0 +1,55 @@
+JRL Messages 3.5.2 - The cache that lied, and the loop that believed it
+
+What your screenshots revealed
+The paired list finally works, and it named the ghosts: "Jonathan's
+A14" and "moto g54 5G" are Android phones (several mystery addresses
+from earlier sessions were them, correctly rejected), and there is now
+a paired entry named "iPhone", which strongly suggests your Phone Link
+QR pairing completed. And yet the app kept saying that very entry
+"does not serve iPhone notifications", every thirty seconds.
+
+Three bugs made that lie stick, and all three are fixed.
+
+1. The Windows service cache. Windows remembers a paired device's
+   service list, and the app was reading that memory instead of asking
+   the phone. One stale snapshot, taken at a bad moment during the
+   earlier pairing chaos, makes a genuine iPhone look service-less on
+   every later connect, forever. Every service check now forces live
+   discovery and never trusts the cache: the worker's sessions, the
+   proof probe, and the wizard, all three.
+
+2. The poisoned shortcut loop. When the app decided to re-identify
+   your phone by proof, its search still tried the stored paired entry
+   first, connected to it successfully, hit the same cached lie, and
+   never reached the proof step. Your 21:30-21:32 log is that loop.
+   Once proof is pending, the search now skips the stored-address and
+   paired shortcuts entirely and goes straight to testing the live
+   anonymous broadcasts.
+
+3. A silent two-release-old bug the same investigation exposed: the
+   background link's paired-list lookup has been failing quietly since
+   3.3.2 because of a data-shape mismatch, which is why the worker
+   never benefited from the paired list at all. Fixed and pinned so
+   the shapes can never drift apart again.
+
+What to expect after upgrading
+Power button, extract, install.bat, confirm v3.5.2. Then just watch
+the bell for a minute or two: with your "iPhone" pairing already in
+place, the first live-discovery connect should either subscribe (bell
+says "iPhone link connected", and the email-and-lock test should
+mirror) or, if the phone still withholds permission, you will get the
+precise paired-but-waiting message about the Share System
+Notifications switch rather than the false "not your iPhone" verdict.
+The Test link button gives the same answer on demand.
+
+And the standing question that decides the last mile: does a test
+notification appear inside Phone Link's own window? If Phone Link
+shows it and this app connects but stays quiet, say exactly that; if
+Phone Link itself shows nothing, the phone-side permission from the QR
+flow did not finish, and rerunning Phone Link's setup is the fix.
+
+Validation
+213 unit tests (new: the cache-bypass is asserted on the live session
+fakes; the proof-escalation skip is exercised end to end with the
+stored address proven untouched; the paired-row shape is pinned) and
+all four live harnesses green.

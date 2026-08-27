@@ -1,0 +1,79 @@
+name: Bluetooth pairing report (experimental feature)
+description: A field report about iPhone notification mirroring over Bluetooth. These reports directly advance the project's hardest open problem.
+title: "[Pairing] "
+labels: ["bluetooth", "field-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This feature is experimental and known to be unreliable; see docs/known-issues.md for why.
+        Your report is most valuable when it answers the comparison questions below, especially the Phone Link one.
+  - type: input
+    id: version
+    attributes:
+      label: App version (title bar)
+      placeholder: "3.5.2"
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version and Bluetooth adapter
+      placeholder: "Windows 11 24H2, Intel AX211"
+    validations:
+      required: true
+  - type: dropdown
+    id: phonelink
+    attributes:
+      label: Is the iPhone paired through Microsoft Phone Link (its QR flow)?
+      options:
+        - "Yes, paired via Phone Link's QR"
+        - "Paired some other way"
+        - "Not paired at all"
+        - "Not sure"
+    validations:
+      required: true
+  - type: dropdown
+    id: phonelink_shows
+    attributes:
+      label: The decisive check. Does a test notification appear inside Phone Link's own window?
+      description: Send yourself a notification (for example an email) and watch Phone Link itself. This single answer separates a phone-side permission problem from a subscriber-authorization problem.
+      options:
+        - "Yes, Phone Link shows it"
+        - "No, Phone Link shows nothing either"
+        - "Did not test"
+    validations:
+      required: true
+  - type: input
+    id: entries
+    attributes:
+      label: How many "iPhone" entries appear in Windows Settings > Bluetooth & devices?
+      description: Duplicate bonds are common and matter. Note Connected/Paired status for each.
+      placeholder: "Two, both showing Connected"
+  - type: dropdown
+    id: share
+    attributes:
+      label: On the iPhone, is Share System Notifications ON for this PC?
+      description: Settings > Bluetooth > (i) next to the PC's name.
+      options:
+        - "Yes"
+        - "No"
+        - "The (i) or the switch is not visible"
+        - "Not sure"
+  - type: textarea
+    id: wizard
+    attributes:
+      label: Wizard notes
+      description: Run "Connect my iPhone" in Settings and paste the notes it reports.
+      render: text
+  - type: textarea
+    id: testlink
+    attributes:
+      label: Test link output
+      description: Press "Test link", then open Activity and press "Copy all". Paste here (redact your server address).
+      render: text
+  - type: textarea
+    id: story
+    attributes:
+      label: What you observed
+      description: Anything else. Timing, whether it ever worked, what changed.

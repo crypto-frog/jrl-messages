@@ -1,0 +1,49 @@
+JRL Messages 3.5.1 - The skipped restart that left the link dead
+
+What your 21:16 log caught
+When you pressed Save, the link stopped to re-aim at the new address.
+The old radio thread was mid-scan and slow to notice the stop, so the
+scheduled restart waited four seconds, gave up ("Phone link thread
+slow to stop; restart skipped this time"), and nothing ever tried
+again. From that moment the link was dead until the next app start,
+which is why your session went quiet after 21:16:24. Also visible in
+the log: the address remembered at 21:14 had already rotated away by
+21:16 ("was not found"), which is normal iPhone behavior the self-heal
+probe handles, but only if the worker is actually running.
+
+The fix
+A restart that arrives while the old thread is still winding down is
+no longer dropped. It is handed to that thread itself, which respawns
+the link the moment it exits, and an explicit switch-off still cancels
+everything cleanly. Three new tests pin the semantics, including the
+race where the old thread exits in the very instant the handoff is
+recorded.
+
+Also: pressing "Phone Link pairing…" now writes a line to the
+Activity panel, so your logs show when the QR flow was opened, which
+this log could not tell me.
+
+The one thing the log cannot show
+Whether the Phone Link QR pairing itself completed, and whether a test
+notification actually appeared inside Phone Link's own window. That
+sighting is the proof that both the pairing and the phone's
+notification permission exist; everything in this app is downstream of
+it. The order that matters:
+
+1. Phone Link pairing… > scan the QR with the iPhone camera > allow
+   Link to Windows > finish its steps.
+2. Send yourself an email and confirm the notification appears IN
+   PHONE LINK.
+3. Only then: Connect my iPhone, wait for the timed proof, Save.
+
+If step 2 never shows a notification in Phone Link itself, the issue
+lives entirely between Microsoft and Apple on your machine, and no
+version of this app can succeed until it does; that is the honest
+boundary.
+
+Validation
+211 unit tests and all four live harnesses green.
+
+To upgrade
+Power button, extract, install.bat, confirm v3.5.1, then the three
+steps above in that order.

@@ -1,0 +1,57 @@
+name: Bug report
+description: Something broke, misbehaved, or went quiet.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Precise field reports are how every fix in this project has ever happened. Thank you.
+        Before pasting logs: redact your server address, and never include your BlueBubbles password. Blur message content that is not yours.
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Exactly as shown in the window title bar. This is the ground truth for what is running.
+      placeholder: "3.5.2"
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Messages missing or late (sync)
+        - Sending / outbox
+        - Notifications (popups, sounds, bell)
+        - Window UI (threads, composer, images, emoji)
+        - Background agent (startup, supervisor, pipe)
+        - Bluetooth / iPhone notification mirroring (use the pairing template instead if it is about pairing)
+        - Mac side (BlueBubbles, keepalive, Wake Mac)
+        - Installer / upgrade
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what actually happened. Timestamps help enormously.
+    validations:
+      required: true
+  - type: textarea
+    id: activity
+    attributes:
+      label: Activity log
+      description: In the app, open the Activity window and press "Copy all". Paste here (redact your server address).
+      render: text
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Drag images here. The connection indicator and the title bar are often the key detail.
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: "Windows 11 24H2"

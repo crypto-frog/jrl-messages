@@ -1,0 +1,59 @@
+JRL Messages 3.5.0 - Pairing handed to Phone Link; this app attaches
+
+The truth about that QR dialog
+You asked for pairing "like Phone Link does it", and you deserve the
+straight answer about why theirs is smooth: the QR code is not the
+pairing. It launches Link to Windows, a small Microsoft app that runs
+ON THE IPHONE the moment you scan it, and that app performs the
+phone-side pairing from inside iOS with Apple's blessing. That is why
+the prompts are right, the (i) page is right, and the permissions
+land. No Windows program can put software on your iPhone; only Apple's
+App Store allows that. So their exact flow cannot be rebuilt, and I
+will not pretend otherwise.
+
+What CAN be done, and now is
+Bluetooth pairings belong to Windows, not to the app that created
+them. So 3.5.0 stops fighting on pairing entirely and divides the work
+by strength:
+
+- Phone Link's QR flow creates the pairing (Microsoft's app on the
+  phone, correct iOS pages every time).
+- This app attaches to that pairing and does everything else: finds
+  the phone by proof, subscribes, proves the link with a live timed
+  round trip, and presents every notification through YOUR popups,
+  bell, tint, and sounds.
+
+Concretely, in the picker:
+- A new "Phone Link pairing…" button opens Microsoft's QR dialog (the
+  exact one in your screenshot) with fallbacks if the app moved.
+- "Connect my iPhone" is now attach-only. It NEVER pairs and NEVER
+  removes pairings. If it finds your iPhone unpaired, it says exactly
+  that and points to the Phone Link button; nothing is attempted
+  behind your back and no prompts fire into the void.
+- The app's own coached pairing ceremony still exists for machines
+  without Phone Link, offered only as an advanced fallback.
+
+The setup, start to finish
+1. Choose iPhone… > "Phone Link pairing…" > scan the QR with the
+   phone's camera > allow Link to Windows > finish its steps. Then
+   prove it once: send yourself an email and confirm the notification
+   shows in Phone Link. That single check proves the pairing AND the
+   phone's notification permission end to end.
+2. Press "Connect my iPhone". It attaches, tests, and shows the
+   round-trip time. Press Save. Done permanently; reconnects,
+   rotations, and restarts are handled.
+3. Optional: turn off Phone Link's own notification banners inside
+   Phone Link's settings so arrivals show only through this app; the
+   pairing it created remains either way.
+
+Validation
+208 unit tests. New pins: default mode never pairs (an unpaired phone
+yields the needs-Phone-Link outcome with zero pairing attempts), the
+launcher has fallbacks, and the advanced ceremony still passes all its
+prior tests behind the flag. The never-unpair pin from 3.4.4 stands.
+All four live harnesses green.
+
+To upgrade
+Power button, extract, install.bat, confirm v3.5.0, then the three
+setup steps above. Since you already have Phone Link's QR dialog open,
+you can do step 1 right now, before even upgrading.

@@ -1,0 +1,89 @@
+JRL Messages 3.1.2 - Ghost windows eliminated, Activity panel, polish
+
+The ghost-window storms, run to ground
+The 3.1.1 report came with a screenshot, and it identified the class of
+the invaders precisely: small bare frames titled "JRL...", white and
+unstyled, popping and vanishing for half a minute or more after an
+action (saving settings, hiding, unhiding), with the whole app freezing
+and the connection indicator thrashing. Untitled white top-level frames
+mean exactly one thing in this codebase: widgets that momentarily
+became parentless top-level windows during interface churn. 3.1.2
+removes every way that can happen and posts a guard for anything that
+still tries:
+
+1. No teardown path orphans a visible widget anymore. Conversation
+   bubbles, day separators, outbox entries, and attachment chips are now
+   hidden and destroyed in place, never detached into a top-level
+   window object first. The flash cannot occur because the state it
+   flashed from no longer exists, on any platform.
+2. Rebuilds are batched. Reopening a conversation now constructs all
+   its bubbles with painting paused and lays them out in one pass
+   instead of one relayout per message, which is also the churn that
+   saturated the event loop and froze the window during hide/unhide.
+3. Needless churn is gone at the source. The conversation list skips
+   its rebuild entirely when nothing changed (background sweeps used to
+   reset it every few seconds), and saving Settings re-themes the whole
+   application only when the accent or text size actually changed;
+   changing an unrelated setting like help tips no longer triggers an
+   app-wide restyle at all.
+4. A window warden now runs at all times: four times a second it checks
+   the application's top-level windows, and anything that is not an
+   expected window class is hidden immediately and recorded in the
+   Activity panel with its exact class, size, and flags. If anything
+   like this ever recurs, the screen stays clean and the log names the
+   culprit for a same-day fix. The warden is rate-limited so it can
+   never become a loop itself, and it was proven live: the test harness
+   spawns a rogue window and watches the warden remove and report it.
+5. The connection indicator's frantic spinning was event-loop
+   starvation making its clock jump. Its motion is now advanced by a
+   clamped step per actual frame, so heavy load can only ever slow it
+   down, never make it spasm.
+6. A dormant defect found during the audit: the tray icon's menu was
+   created without an owner and could be silently garbage-collected,
+   killing the tray right-click. It is now owned and parented.
+
+The Activity panel (new, as requested)
+Click the connection chip (the animated indicator or the status text)
+for a live, dark-styled panel showing what the app is doing as it does
+it: connection attempts, live-push state changes, errors, refusals,
+resets, wakes with their recovered counts, recoveries, settings saves,
+and agent handshakes, all timestamped, with repeated lines collapsed so
+a noisy condition cannot bury the story. Warnings and errors from every
+module are mirrored in automatically, including popup circuit-breaker
+reports and window-warden reports. Copy all puts the session on the
+clipboard; Open log folder opens the full on-disk logs. The panel is
+non-modal, so it can stay open beside the app while you work.
+
+Fixes and polish
+- The hover Hide control now appears on every conversation row. It
+  previously appeared only on rows that happened to repaint for another
+  reason (selection or unread updates), because the list never
+  generated hover repaints of its own; it now tracks the cursor row to
+  row and repaints exactly the rows it leaves and enters.
+- The Settings gear is now a drawn icon like every other control: a
+  thin-stroke modern gear in your accent color, sized from your
+  text-size setting, with the same circular hover treatment as its
+  neighbors, replacing the system font glyph.
+
+Validation
+- 111 automated tests pass: everything from 3.1.1 plus new regressions
+  holding every anti-ghost rule in place (no orphaning in any teardown
+  path, batched rebuilds, reload dedupe, no-op theme saves, warden
+  behavior and rate cap, tray menu ownership, badge motion clamp,
+  activity recorder bounds and logging bridge, gear icon).
+- The live storm harness passes under a real display and now also
+  proves: a rogue top-level window is hidden and named within a
+  quarter-second; the Activity panel opens, carries the session, and
+  appends live; hover tracking follows plain rows; and the original
+  checks (tips-off storms, alert-flood churn with the breaker, flat
+  window counts, no event-loop stalls, ledger drain to zero) all hold.
+- The window construction, agent channel, and full pipeline harnesses
+  pass unchanged. All Python modules compile.
+
+Upgrade
+1. Quit via the tray menu.
+2. Extract this ZIP over the existing jrl-messages folder.
+3. Run install.bat once.
+4. Start JRL-Messages.bat and confirm v3.1.2 in the title bar.
+5. If you ever see anything odd again, open the Activity panel and use
+   Copy all; that text is the diagnosis.

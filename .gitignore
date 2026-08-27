@@ -1,0 +1,33 @@
+# Virtual environments
+.venv/
+venv/
+
+# Python build artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Local runtime data (the app stores its database, config, cache, and logs
+# under the per-user data directory, not the repo, but guard against copies)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+config.json
+logs/
+cache/
+
+# OS noise
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Editors
+.idea/
+.vscode/
+*.swp
+
+# Packaging leftovers
+*.zip

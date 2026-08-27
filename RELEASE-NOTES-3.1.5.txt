@@ -1,0 +1,59 @@
+JRL Messages 3.1.5 - The silent alerts, found: texts to yourself now ring
+
+What was actually wrong
+Your screenshot solved it. The test message was "Zzzz" sent to your own
+number: the top conversation showed "You: Zzzzz". A text to yourself is
+the natural way to test the line, but Apple marks it as SENT BY YOU on
+every device it lands on. The app, like every prior version, treated
+anything sent-by-you as an outgoing echo and deliberately never created
+an alert for it. So the message arrived and displayed (which you saw),
+while the alert ledger recorded nothing (which you heard). The Test
+alert button worked because it exercises the popup and sound machinery
+directly without going through that ledger. Nothing in 3.1.4's pipeline
+was broken; the pipeline was never asked to run. Alerts from OTHER
+people were ringing the whole time.
+
+What 3.1.5 does
+1. Self-conversations alert. A text in a one-to-one conversation with
+   one of your own numbers or emails now creates the same durable alert
+   record as any other arrival: popup, sound, unread badge, list steer,
+   all of it, even though Apple stamps it sent-by-you.
+2. Your identities are learned and taught. The account your Mac reports
+   is recognized automatically the moment the agent connects, and it is
+   remembered so alerts work from the first second after a restart.
+   Settings gained a Self-texts row: a checkbox to turn the behavior
+   off, and a field for your OTHER own numbers or emails, comma
+   separated. If you text yourself at your phone number, put that
+   number there (for example +15875550123); the Mac usually reports
+   only your Apple ID email, so the phone-number self-conversation
+   needs this one entry to be recognized.
+3. Texts sent from THIS app never alert, anywhere. The moment a send
+   completes, its message row is stamped so no later rescan, restart,
+   or reconciliation pass can ever turn your own PC-sent text into a
+   popup. Replying to yourself from the PC stays quiet; the phone-typed
+   side still announces itself.
+4. Ordinary conversations are untouched. A from-me text in any normal
+   conversation still never alerts; groups are never treated as
+   self-conversations.
+
+Proof, not hope
+- Seven new regression tests pin the whole behavior: self-chat texts
+  create exactly one alert record even across rescans, app-sent texts
+  never do even when re-read later, other chats and groups keep the old
+  exclusion, the switch restores the old behavior, identities survive a
+  restart, and the settings and agent wiring is verified.
+- The live pipeline harness (real agent against a scripted Mac) now
+  boots, learns the account from the server, receives a phone-typed
+  self-text, and proves the durable alert record appears; then sends a
+  self-text through the real outbox and proves silence holds through
+  reconciler rescans.
+- The live window harness raises a real card and sound from a
+  sent-by-you self-text, and proves a from-me text to a friend stays
+  silent.
+- Full suite: 133 unit tests plus all four live harnesses pass.
+
+To upgrade
+Quit with the round power button, extract the zip over the old folder,
+run install.bat once, and confirm the Settings dialog shows v3.1.5.
+Then open Settings and add your phone number to the Self-texts field,
+and send yourself a Zzzz.

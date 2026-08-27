@@ -1,0 +1,117 @@
+JRL Messages 3.0.0 - Always-on agent, automatic Wake Mac, Mac keepalive
+
+The architecture change
+Everything network-facing now lives in a background agent that starts at
+logon and never stops: the live push socket, the 3-second ROWID
+verifier, the minute head scan, the 24-hour audit, sending, downloads,
+the 15-second watchdog, Recover, and Wake Mac. The window you open is a
+fast viewer over the same local database plus a private per-user event
+channel. Nothing about the sync engine's logic changed; it changed
+address. Consequences you will feel:
+
+- Messages are collected, verified, and stored 24/7, window closed or
+  not. Opening the window is instant and already complete: correct
+  unread counts, full history, no catch-up wait, and no flood of stale
+  popups (messages older than 30 minutes never toast late; that rule
+  already existed and now does exactly what it was written for).
+- The reliability machinery no longer restarts when you close the
+  window, so cursors, baselines, and the push connection stay warm.
+- If the agent crashes it is restarted by its supervisor with backoff;
+  if that is gone, an hourly failsafe or simply opening the window
+  brings it back; at worst, next logon does. Stop-Agent.bat stops it on
+  purpose; Agent-Console.bat runs it with visible output for debugging.
+- Sending stays exactly-once safe across both processes: sends are
+  written durably to the outbox first, so an agent restart mid-send
+  either completes visibly or turns red for your click. Nothing silent,
+  nothing doubled, exactly as before.
+
+Automatic Wake Mac
+The held-back-texts cure now fires by itself. After a configurable
+quiet interval with no incoming messages (Settings > Auto Wake Mac:
+Off, 15, 30, 60, or 120 minutes; default 30), the agent restarts
+Messages on the Mac, forces the usual staggered re-checks, and logs an
+honest recovered count. Every safety from the manual button carries
+over: it never runs while one of your own messages is queued or on the
+wire, never during a recovery, is skipped when the Mac is unreachable,
+and at most one wake occurs per quiet interval. The button and
+Ctrl+Shift+M remain, now labelled "Auto wake running..." when the
+policy beat you to it. When an automatic wake recovers texts while the
+window is open, the footer reports the count.
+
+Mac keepalive package (new mac folder + MAC-SETUP.md)
+One installer hardens the Mac end, attacking the same failure at its
+source so wakes are rarely needed at all:
+- Every 5 minutes: relaunch Messages or the BlueBubbles server if not
+  running, and nudge Messages with one AppleScript event so macOS never
+  idles it into the state where Apple holds texts back.
+- Nightly at 4:15 (configurable or removable): quit and reopen
+  Messages, the same cure as Wake Mac, before your day starts.
+- App Nap disabled for Messages and BlueBubbles.
+- Optional --with-power: system sleep off, display sleep allowed, wake
+  on network, restart after power failure, pre-restart wake.
+Everything is user-level, logged to ~/Library/Logs/jrl-keepalive.log,
+verifiable with --status, and fully reversible with the uninstaller.
+
+Bubble sizing simplified
+The manual bubble-width option never worked convincingly and is gone,
+along with all of its plumbing (setting, dialog row, live px readout,
+theme fraction). Bubbles now size themselves: a comfortable share of
+the conversation pane, a floor so short texts stay readable, and a
+text-scale-aware ceiling so lines never grow unreadably long on a wide
+monitor. They reflow live as the window or divider moves, at every text
+size. Old configs with the retired setting load cleanly; the stale key
+is ignored.
+
+Everything else preserved
+All 2.3.0 behavior carries over unchanged: unread pill and title count,
+hide/undo/restore with automatic resurrection on any sign of life (now
+also while the window is closed, handled durably by the agent), groups
+and Private API detection, photos with upright thumbnails and the
+viewer, drag-drop and Ctrl+V attach, emoji picker with recents and big
+emoji rendering, full-history search, click-to-retry sends that never
+auto-resend, read-receipt inference, tapback display, verification-code
+popups with Copy/Fill and their burst protection, Verify line, Test
+popup, per-conversation refresh and F5, Ctrl+Tab cycling, text sizes,
+seven accents, window layout persistence, and the complete
+reconciliation stack (ROWID windows, head scans, deep audits,
+quarantine and retry).
+
+Upgrade
+1. Close JRL Messages.
+2. Extract this ZIP over the existing jrl-messages folder and allow
+   Windows to replace files. AppData settings and the local message
+   database are separate and are not removed.
+3. Run install.bat once. It now also registers and starts the agent.
+4. Start JRL-Messages.bat and confirm the title bar shows v3.0.0.
+5. On the Mac, follow MAC-SETUP.md (15 minutes, one time).
+6. Optional: adjust Settings > Auto Wake Mac. It defaults to 30 quiet
+   minutes.
+
+Validation
+- 66 automated tests pass: the full 2.3.0 store/reconciliation/codes
+  suite, plus new coverage for every auto-wake policy gate (quiet
+  interval, one-wake-per-interval, send-in-flight, busy, unreachable),
+  agent channel framing and command dispatch, batch serialization that
+  can never leak raw payloads, the responsive bubble limit and its
+  text-scaled ceiling, stale-config migration off the retired bubble
+  key, kick-outbox resubmission semantics, and static contracts that
+  the agent owns every worker, watchdog, outbox gate, and the wake
+  state machine while the window process hosts none of them.
+- Three offscreen harnesses pass:
+  1. Full window construction at Default and Largest scales, including
+     bubble reflow across window sizes and footer/button reactions to
+     agent events.
+  2. A live agent-channel round trip: real AgentCore and AgentServer,
+     real QLocalSocket client, hello on connect, command dispatch,
+     broadcast fan-out, clean refusals with no backend, and stop_agent
+     ending the loop.
+  3. A live pipeline against a mock BlueBubbles HTTP server with the
+     real workers: boot import without stale notifications, ROWID
+     support negotiation, notification-floor arming, discovery of a
+     new Mac row with its durable delivery event created headless, a
+     durable outbox send completing to 'sent' on the documented route,
+     the Wake Mac machine reaching its watching phase on the documented
+     restart route, and everything carried by the 3-second checks with
+     the push socket down throughout.
+- All Python modules compile; the window process imports no worker,
+  thread, or socket machinery anywhere in its code path.

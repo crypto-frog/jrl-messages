@@ -1,0 +1,65 @@
+JRL Messages 3.3.0 - iPhone notifications over Bluetooth, no Phone Link
+
+What this is
+Your iPhone hands its notifications to Bluetooth devices paired directly
+to it; that is how a smartwatch shows them and how Phone Link works.
+JRL Messages now speaks that protocol itself (Apple's Notification
+Center Service), so your iPhone's app notifications (social, email,
+banking, calendar, calls) appear as this app's own popups, marked
+"· iPhone", with the same sound, in your tint, at your text size, and
+recorded in the bell. No Phone Link needed.
+
+How it behaves
+- Obeys your existing switches: Popups and Sound apply exactly as they
+  do for messages; sound-only mode works; everything lands in the bell.
+- Texts are never mirrored, deliberately. They already arrive through
+  the Mac with full history and richer popups, so one message can never
+  alert you twice.
+- A Mute apps box silences noisy apps by name (e.g. "instagram").
+- The link reconnects by itself with patient backoff when the phone
+  leaves and re-enters range, and narrates everything in the Activity
+  panel and the bell: connected, lost, retrying, pairing.
+- Bursts are storm-safe: the same circuit breaker that guards message
+  floods bounds mirrored floods, and redelivered notifications never
+  duplicate in the bell.
+
+Setup, once (about two minutes)
+1. Pair the iPhone with this PC: Windows Settings > Bluetooth & devices
+   > Add device > pick your iPhone, confirm the code on both screens.
+2. In the app: Settings > Alerts > turn on "Mirror iPhone
+   notifications" > Choose iPhone… > scan, pick it, Save.
+3. Allow the prompt on the iPhone if one appears. If it stays quiet:
+   iPhone Settings > Bluetooth > (i) beside this PC > turn on
+   Share System Notifications.
+
+Honest expectations (please read this one)
+- Bluetooth range only: it works while the phone is within roughly a
+  room of the PC. Your messages still travel any distance through the
+  Mac as always; this feature covers the phone-in-your-pocket case.
+- It ships OFF and marked experimental. Every part I can prove in a
+  test container is proven: the protocol layer is byte-exact under 18
+  unit tests (fragmentation, unicode, malformed data, runaway buffers),
+  and the whole in-app pipeline runs live in the harness (popups,
+  sound, bell, bursts, dedupe, link transitions). The one thing no
+  container can exercise is your actual Bluetooth adapter talking to
+  your actual iPhone. If the link misbehaves there, it degrades to
+  Activity-panel messages, never touches the rest of the app, and
+  tools\phone_link_probe.py prints a step-by-step diagnostic you can
+  send back.
+
+Under the hood, for the record
+- New app/phone package: ancs.py is the pure protocol (Notification
+  Source events, Control Point commands, Data Source reassembly,
+  filtering rules), link.py is the radio worker on its own thread with
+  lazy imports, so machines without Bluetooth lose exactly one optional
+  feature and nothing else. The background agent is untouched.
+- The iPhone's pre-existing notification backlog is deliberately never
+  alerted on connect (that would storm the screen every reconnection);
+  only fresh, audible, newly posted notifications ring.
+- 175 unit tests (25 new) and all four live harnesses pass, with every
+  earlier regression guard unchanged.
+
+To upgrade
+Quit with the round power button, extract the zip over the old folder,
+run install.bat once (it installs the Bluetooth support), confirm
+Settings shows v3.3.0, then follow the three setup steps above.

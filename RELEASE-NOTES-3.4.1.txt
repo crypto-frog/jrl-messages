@@ -1,0 +1,54 @@
+JRL Messages 3.4.1 - The silent phone, explained and fixed
+
+What "no prompt, nothing" told us
+Your report was the missing clue. When the ceremony says it is waiting
+for approval and the iPhone shows absolutely nothing, the cause is
+almost always a STALE one-sided trust: Windows still holds an old
+Bluetooth bond record for the phone (Phone Link created one long ago),
+so when the app asks Windows to pair, Windows answers "already paired"
+internally and sends nothing over the air. The phone has nothing to
+show a prompt for, and the subscription keeps failing because the
+phone no longer honors that old key. Both sides were technically
+behaving correctly; the relationship was broken.
+
+What 3.4.1 does about it
+The Connect ceremony now detects exactly this state: connected fine,
+subscription refused, and Windows claiming the device is paired. When
+it sees that combination it announces "Found the problem", resets the
+stale trust on the PC side, reconnects fresh, and only THEN triggers
+the pairing, at which point your iPhone finally has a real pairing
+request to show you. One honest side effect is stated out loud during
+the reset: another app's old pairing to the phone (such as Phone Link)
+may need redoing later, since the stale record it relied on is the
+thing being cleared.
+
+If the phone stays silent even after the reset, the remaining cause is
+the mirror image (an old entry on the PHONE for this PC), and the
+ceremony now tells you the exact fix by name: iPhone Settings >
+Bluetooth > the (i) beside this PC's name > Forget This Device, then
+run Connect my iPhone again. That coaching, with your PC's actual
+name, appears right in the dialog and in the notes.
+
+Small refinements from your screenshot
+- The waiting messages now lead with "unlock the phone"; iOS hides
+  pairing prompts behind the lock screen, so a locked phone looks
+  exactly like a missing prompt.
+- Every pairing outcome that Windows reports (completed, already
+  paired, failed) is written into the visible notes, so nothing about
+  this handshake is silent anymore.
+
+Validation
+200 unit tests. The new scripted-radio ceremony reproduces your exact
+field case: a phone whose subscription is refused while Windows claims
+it is paired must be bond-reset, freshly reconnected, and only then
+paired, with the reset visible in the notes; a second test pins the
+Forget This Device coaching. All four live harnesses green.
+
+To upgrade and run
+Quit with the power button, extract over the old folder, run
+install.bat, confirm v3.4.1. Then Settings > Alerts > Choose iPhone… >
+Connect my iPhone, with the phone UNLOCKED in your hand. Expect the
+"Found the problem… resetting" message this time, then the pairing
+prompt on the phone. Tap Pair, wait for "Connected, paired, and
+proven", press Save, then email yourself and lock the phone to see the
+first real mirrored notification.

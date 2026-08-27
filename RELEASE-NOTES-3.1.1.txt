@@ -1,0 +1,96 @@
+JRL Messages 3.1.1 - Storm-proofing hotfix, Hide icon, animated connection
+
+What happened in 3.1.0
+Turning help tips Off could set off runaway window creation: cards and
+tooltip windows spawning without end, the app freezing, and the display
+left visually corrupted. The root exposure was architectural, so 3.1.1
+does not patch one code path; it removes the whole class of failure.
+Three mechanisms introduced in 3.1.0 were each capable of creating or
+churning windows without a hard bound, and all three are redesigned:
+
+1. The tooltip controller. 3.1.0 installed an application-wide event
+   filter that intercepted five kinds of events and called into Qt's
+   native tooltip machinery (hiding tooltip windows) from inside the
+   global filter, including at the exact moment tips were switched Off.
+   Interfering with native windows from a global filter is unsafe by
+   construction. The 3.1.1 filter is provably inert: it examines exactly
+   one event type (the tooltip request) and the only thing it can do is
+   allow or consume it. It cannot create, hide, show, or destroy any
+   window, on any platform, in any state. Regression tests pin this down
+   both statically (the filter contains no window calls, handles no other
+   events) and behaviorally. The tips experience is unchanged: Show each
+   twice (default, persistent, one hover counts once), Always, Off,
+   suppression while clicking or dragging, and Reset learned tips.
+
+2. The alert cards. The popup manager is the only place cards are born,
+   so it now enforces physical bounds no bug elsewhere can bypass: still
+   at most 3 cards on screen with a bounded queue behind them, plus a
+   creation-rate circuit breaker (more than 12 cards created within 45
+   seconds parks new cards in the queue, logs loudly, and resumes calmly
+   after a 20-second cooldown), plus a hard cap that counts real card
+   windows on the screen rather than trusting internal bookkeeping. A
+   runaway of any origin now converges to a quiet queue instead of a
+   window storm, and no durable alert is ever lost: the ledger drains
+   normally once the burst passes. Verified live by a new storm harness
+   that floods verification-code alerts under aggressive card churn.
+
+3. The version-upgrade handoff. The 3.1.0 window would retire and
+   relaunch a mismatched background agent in an unbounded loop. The
+   handoff now has a budget (3 minutes, at most 8 forced relaunches);
+   if it cannot converge it steps back to the calm 30-second reconnect
+   cadence and tells you to run install.bat, and the Startup entry and
+   hourly failsafe keep covering the service.
+
+The requested interface changes
+
+- Hide is now an icon that says "hide". The hover ✕ on a conversation is
+  replaced by a round chip with a crossed-out eye, drawn in your accent
+  color with a soft accent border, sized from your text-size setting so
+  it stays an easy target at every scale. It is the same mark as the
+  labelled Hidden button beneath the list, so hiding and reviewing
+  hidden conversations read as one visual language. The hit area is
+  slightly larger than before.
+
+- The connection indicator is no longer a bare green dot. The bottom-left
+  corner now carries a rounded connection chip holding a larger animated
+  badge beside the status text. While connected, a comet arc orbits a
+  filled core, so a healthy line is something you can see moving. While
+  degraded or catching up, the ring breathes slowly. When offline, a
+  broken ring holds deliberately still. It follows the theme's status
+  colors and your text size, animates only while actually visible (a
+  hidden or minimized window spends nothing), and clicking it, or the
+  status text, opens the full connection details.
+
+Also in this release
+
+- The stray one-time settings write from the tooltip controller is
+  hardened against failures, and its learned-tips bookkeeping is bounded.
+- requirements.txt keeps requests (python-socketio's polling fallback
+  really does use it; a regression test now documents why it is there).
+- Windows count, event-loop responsiveness, stylesheet integrity, badge
+  animation lifecycle, and hide-icon rendering are all asserted by a new
+  live storm harness (tools/harness_storm.py) run under a real display.
+
+Validation
+- 100 automated tests pass: the complete 3.1.0 suite (85) plus 15 new
+  storm regressions covering tooltip-filter inertness (static and
+  behavioral), breaker engagement, cooldown release, the screen-counted
+  hard cap, queue bounds under flood, upgrade-handoff budgets, the
+  eye-off Hide control, the connection badge lifecycle, and dependency
+  hygiene.
+- Five harnesses pass: the offscreen window build at two text scales,
+  the live agent channel end-to-end, the full pipeline against a mock
+  BlueBubbles (boot, discovery, durable alerts, outbox send, wake), and
+  the new storm harness under a real X display, including the exact
+  reported path: turn tips Off, keep using the app, flood it with
+  alerts, and churn every card. Window count stays flat, the event loop
+  never stalls, and the ledger drains to zero.
+- All Python modules compile.
+
+Upgrade
+1. Close JRL Messages (tray menu, Quit).
+2. Extract this ZIP over the existing jrl-messages folder, replacing
+   files. Settings and the message database are untouched.
+3. Run install.bat once; it retires the old agent safely and verifies
+   the new one is running before it finishes.
+4. Start JRL-Messages.bat and confirm the title bar shows v3.1.1.

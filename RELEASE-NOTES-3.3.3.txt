@@ -1,0 +1,63 @@
+JRL Messages 3.3.3 - Test link button, live status, stubborn reconnects
+
+What your bell showed
+Find my iPhone worked and verified your phone, but the link dropped 25
+minutes later ("not reachable"), never got back, and after that one
+entry the app went quiet. You had no way to see whether it was even
+still trying, and no way to test it on demand. Both are fixed, and the
+reconnect logic learned from the exact failure in your screenshot.
+
+The Test link button
+Settings > Alerts now has Test link, right beside Choose iPhone. It is
+a real test, not a decoration: it asks your iPhone a live question
+over the Bluetooth link (the display name of its own Settings app) and
+pops the answer with the round-trip time, through your normal alert
+style and sound. A pass proves the connection, the encryption, and
+both notification channels end to end. When things are not working,
+the button says exactly where they stopped, in plain words:
+
+- mirroring off or no phone chosen -> it says to set that up first
+- link not running -> it starts it and says to test again shortly
+- not connected right now -> it forces an immediate reconnect attempt
+  (no waiting out the retry timer) and tells you to watch the bell
+- connected -> the live round trip runs and the timing pops
+
+One honest caveat is included in the success message itself: the one
+thing this PC cannot measure is the phone-side "Share System
+Notifications" switch, so if the test passes but real notifications
+stay quiet, that switch is the culprit (iPhone Settings > Bluetooth >
+the (i) next to this PC).
+
+You can always see the link's state now
+The same Settings row shows it live: "Connected now" or "Not connected
+right now; the app keeps retrying". And during a long outage the bell
+posts a quiet "iPhone still unreachable" reminder every half hour, so
+silence in the bell now always means connected and quiet, never
+gave-up.
+
+Smarter about the failure you actually hit
+iPhones rotate their anonymous Bluetooth address regularly. Your link
+was likely stuck retrying an address that had gone stale. Now, after
+two failed connection attempts in a row, the app stops trusting the
+remembered address and re-identifies the phone by proof (the same
+notification-service probe the Find button uses), then remembers the
+new address. The dead-address loop cannot persist.
+
+Also tidied
+The Settings row no longer shows the long "verified..." sentence as
+the phone's name; it stores "Your iPhone".
+
+Reminder: how to see a real notification end to end
+Email yourself and lock the phone, or build a one-tap tester once on
+the iPhone: Shortcuts app > + > Show Notification, add it to the home
+screen. Texting yourself does not test the Bluetooth mirror, by
+design; texts already alert through the Mac and are never doubled.
+
+Validation
+196 unit tests (6 new: the live round trip through the scripted radio,
+button routing in every state, the half-hourly outage reminder, wiring
+pins) and all four live harnesses green.
+
+To upgrade
+Quit with the round power button, extract over the old folder, run
+install.bat, confirm v3.3.3, then Settings > Alerts > Test link.

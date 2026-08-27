@@ -1,0 +1,56 @@
+JRL Messages 3.4.2 - Your Activity log found all three remaining bugs
+
+Thank you for that log. It was the most useful field report of this
+whole effort: three distinct bugs, each visible in plain text.
+
+Bug 1, the blocker: "Could not pair with device: FAILED", instantly
+Windows aborted the pairing before anything reached your phone. Why:
+pairing was being requested with only one "ceremony" (a simple
+tap-to-confirm), but an iPhone negotiates a confirm-code ceremony,
+where both screens show a number. When Windows is not told the app can
+handle that ceremony, it gives up on the spot, promptless. 3.4.2 runs
+the pairing through Windows' full ceremony machinery, requesting every
+kind an iPhone can use. Practically: during Connect my iPhone you may
+now see a code in the wizard ("Code 123456 - confirm it on the
+iPhone"); the app accepts the Windows side for you, and you just tap
+Pair on the phone. This was the wall every previous attempt hit.
+
+Bug 2: "paired (LE) failed: Invalid parameter count", three times.
+The Windows API bindings on your machine speak a slightly different
+dialect than expected, so every paired-list query failed before it
+began. The queries now try every known calling form and use the first
+that binds, so the paired list can finally answer on your machine.
+
+Bug 3: at 16:55 your log shows the BACKGROUND link attempting to pair
+("Pairing with Apple device: confirm the prompt..."). That is the
+invisible-prompt loop the ceremony was built to eliminate, and it was
+still alive inside the background worker, firing prompts at your phone
+at random moments where they expired unseen, and interfering with the
+wizard. The background link now NEVER pairs. If it ever finds the bond
+missing, it says exactly one thing ("Your iPhone wants a pairing
+approval... use Connect my iPhone in Settings") and waits calmly.
+
+Also from your log
+- Anonymous identities churn fast ("Device ... was not found"), so
+  dead candidates now cost 8 seconds instead of 12, making each
+  ceremony pass noticeably quicker.
+- Status texts say "your iPhone" instead of the confusing leftover
+  "Apple device" name.
+
+What to expect this time
+Upgrade (power button, extract, install.bat, confirm v3.4.2), then
+Settings > Alerts > Choose iPhone… > Connect my iPhone, phone unlocked
+in your hand. The sequence you should see: candidates checked, then
+ACTION NEEDED with possibly a code, then a real pairing prompt ON THE
+PHONE (tap Pair), then "Connected, paired, and proven". Press Save.
+Then email yourself and lock the phone for the first mirrored
+notification. If it still will not pair, the notes now capture the
+exact ceremony status Windows reports, and that will pin whatever
+remains.
+
+Validation
+204 unit tests (6 new: the full-ceremony pairing with the confirm code
+surfaced and accepted, a failed ceremony reported honestly, the worker
+raising PairingNeeded instead of pairing with proof it never pairs in
+background, and the dialect-fallback wiring) plus all four live
+harnesses green.

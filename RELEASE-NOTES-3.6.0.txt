@@ -1,0 +1,53 @@
+JRL Messages 3.6.0
+==================
+This build contains the whole 3.5.3 pairing fix (see
+RELEASE-NOTES-3.5.3.txt) plus four desktop upgrades. The title bar
+reads 3.6.0; as always, that number is the ground truth for which
+build is running.
+
+1. Per-conversation drafts (and a leak fixed)
+Until now, half-typed text FOLLOWED you when you switched
+conversations: words meant for one person sat waiting in the next
+person's composer, which is exactly how a wrong-recipient send begins.
+Now every conversation keeps its own draft. Switch away mid-sentence
+and the text and any staged files are put aside; come back and they
+are restored, cursor at the end, staged files re-chipped without
+re-asking the large-file question. Sending clears that conversation's
+draft. Drafts live in the window's memory for the session; they are
+not written to disk.
+
+2. The jump pill counts new arrivals
+While you are scrolled up reading history, new messages no longer
+yank the view down, and they no longer arrive in silence either. The
+"Most recent" pill now counts them: "1 new message", "2 new
+messages". Your own sends still return you to the bottom as before.
+Reaching the bottom by any route (the pill, the wheel, a new
+conversation) resets the count.
+
+3. Save a conversation as a text file
+A new save button sits in the conversation header next to Refresh,
+and Ctrl+E does the same. It writes the ENTIRE open conversation,
+first message to last, as plain text: one dated line per message,
+"Me" for your side, the contact's name or number for theirs,
+"[edited]" and "[message retracted]" markers preserved, and
+"[attachment: name]" lines under the messages that carried files.
+Plain text on purpose: it opens anywhere, prints cleanly, and drops
+into a matter file without a special viewer.
+
+4. Keyboard shortcuts card
+Ctrl+/ (or F1) opens a quiet reference card listing every key the app
+answers to, from Ctrl+F search to Wake Mac. Esc closes it. Nothing to
+memorize; it is simply there when a key slips your mind.
+
+Validation
+234 unit tests green (nine new tests pin the 3.5.3 pairing doctrine,
+twelve pin these upgrades), and all four end-to-end harnesses pass:
+pipeline, storm, offscreen window, and the live agent run against the
+mock server. The agent process is untouched by this release, keeping
+the 3.2.0-onward record intact: window-side releases never modify
+agent code.
+
+Installing
+Extract this zip to a NEW folder (never on top of an old one) and run
+install.bat. Your messages and settings carry over automatically; they
+live in the per-user data directory, not the app folder.

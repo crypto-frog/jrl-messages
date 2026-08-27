@@ -1,0 +1,76 @@
+JRL Messages 3.4.0 - Connect my iPhone: one guided step, and the real
+missing piece found
+
+What your screenshot finally revealed
+Three things at once, and together they told the whole story.
+
+First, seven anonymous Apple devices all "very close": a single iPhone
+broadcasts several separate anonymous identities at the same time, so
+choosing from that list by hand was never a fair task, and I should
+not have asked you to do it.
+
+Second, and this is the important one: everything you described (the
+paired list empty, Find verifying the phone but the link never
+holding, "not connected" forever) fits one root cause. Your phone and
+your PC almost certainly have no Bluetooth LE bond. Phone Link's
+pairing does not create the specific trust that notifications travel
+over. Without it, every connection attempt ends with the iPhone asking
+for a pairing approval, and that prompt was appearing (and expiring)
+on your phone at random moments inside a background retry loop, while
+nobody was looking at it. The setup was failing at a step neither of
+us could see.
+
+Third, two honest UI bugs you caught: selecting a row in the list
+showed no highlight at all (a stylesheet gap; the selection was
+happening invisibly), and the diagnostics that would have explained
+the empty paired list were hidden in a debug log.
+
+The fix: Connect my iPhone
+The picker now has one primary button that does the entire setup as a
+single supervised ceremony while you watch the phone:
+
+1. It finds the phone by proof (the only nearby device that can serve
+   iPhone notifications to this PC), never by name or address.
+2. It connects and, the moment pairing is needed, tells you in large
+   amber text: ACTION NEEDED, look at your iPhone right now and tap
+   Pair / Allow. It then waits patiently, about 40 seconds across five
+   retries, while you approve; no more prompts firing into the void.
+3. It subscribes, then proves the link by asking the phone a live
+   question and showing the round-trip time.
+4. It saves the result itself. You press Save in Settings and you are
+   done, permanently: the approval creates the durable Bluetooth trust,
+   so every future reconnect is automatic, the paired list starts
+   knowing your phone, and address rotation stops mattering.
+
+The candidates it examines are tried strongest-signal first (hold the
+phone next to the PC), a device without the notification service is
+skipped without ever bothering it with a pairing prompt, and at most
+three candidates are ever asked to pair, so a neighbor's device cannot
+be pestered. Every skipped device and the reason is reported in the
+dialog and in the Activity panel.
+
+Also fixed and improved
+- List selections are visible everywhere pickers are used (highlight
+  in your accent color; double-click also chooses).
+- The background link now pauses while the setup wizard owns the
+  radio, and resumes whether you Save or Cancel.
+- A restart of the link a moment after stopping it can no longer be
+  silently swallowed.
+- Setup coaching, closeness hints, and every failure reason are shown
+  in the dialog itself, word-wrapped, as they happen.
+
+How to run it
+Upgrade (quit with the power button, extract, install.bat, confirm
+v3.4.0), then: Settings > Alerts > Choose iPhone… > Connect my iPhone,
+with the phone UNLOCKED in your hand. When the amber text appears, tap
+Pair on the phone (and allow the Windows "Add a device" message if one
+shows). Wait for "Connected, paired, and proven", press Save, then
+prove it end to end: send yourself an email and lock the phone.
+
+Validation
+198 unit tests (two new scripted-radio ceremonies: the full
+pair-and-prove flow, and an unapproved pairing failing with honest
+notes; the AirPods-like decoy is skipped without ever being asked to
+pair) and all four live harnesses green. The pairing approval itself
+is the one human step no test can perform; that is exactly why it is
+now coached out loud instead of hidden.

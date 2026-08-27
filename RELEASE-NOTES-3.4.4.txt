@@ -1,0 +1,55 @@
+JRL Messages 3.4.4 - No more automatic unpairing, and the clean-slate
+recipe that gets you out of the ghost-entry trap
+
+What your report proved
+Elmo showing on the phone with no (i), even after answering the
+device-kind question, means the phone's entry is a ghost: a leftover
+shell from the earlier pair-and-destroy loop, holding a half-bond that
+matches nothing on Windows. iOS gives such remnants no detail page,
+which locks you out of the notifications switch entirely. The
+automatic "stale bond reset" I shipped in 3.4.1 is what created this
+wreckage, and I own that. It is now removed permanently: the app will
+NEVER unpair anything again. When it finds itself paired but refused,
+it stops, saves the win, and coaches; when a trust is genuinely
+broken, the repair is done BY HAND with both sides visible, using the
+recipe below.
+
+THE CLEAN-SLATE RECIPE (do this once; it needs no app upgrade)
+1. On Windows: Settings > Bluetooth & devices > Devices > Remove any
+   iPhone or unknown entries.
+2. On the iPhone: tap Forget This Device on any 'elmo' entry that
+   offers an (i). If the entry shows no (i), toggle Bluetooth off and
+   on; if the ghost lingers, restart the phone once.
+3. Pair the OFFICIAL way: Windows Settings > Add device > Bluetooth >
+   pick your iPhone (unlocked, on its Bluetooth screen), confirm the
+   code on both. The phone now lists elmo as a real computer WITH an
+   (i) page, exactly like you remember from before.
+4. Open the app and run Settings > Alerts > Choose iPhone… > Connect
+   my iPhone once, so the notification channel attaches to that
+   healthy trust. Approve anything either screen shows.
+5. On the phone: elmo > (i) > turn ON Share System Notifications. If
+   the switch is not listed yet, wait one minute (the app's retry is
+   what makes iOS add it) and reopen the (i).
+6. Watch the bell for "iPhone link connected", then email yourself
+   and lock the phone.
+
+What changed in the app
+- The ceremony never unpairs, ever (pinned by a test that fails the
+  build if unpairing ever returns). Already-paired plus refused now
+  ends immediately as "paired, waiting on the phone's switch" with
+  the address saved and the background link finishing the job on its
+  own.
+- Every coaching text (ceremony, background link, setup guide) now
+  carries the clean-slate recipe with your PC's actual name, including
+  the no-(i) ghost case, and makes Windows-Settings pairing the
+  official first step.
+
+Validation
+206 unit tests and all four live harnesses green, including the new
+pin: an already-paired phone with a refused subscription produces the
+paired-pending result with zero pairing attempts and zero unpairs.
+
+Upgrade order
+Do the recipe above first (steps 1 to 3 need no app at all), then
+upgrade (power button, extract, install.bat, confirm v3.4.4), then
+step 4 onward.

@@ -1,0 +1,56 @@
+JRL Messages 3.1.3 - Alerts while the app is open, list steering, hide zones
+
+Alerts no longer assume you are watching
+Until now, a text arriving into the conversation you had on screen in a
+focused window was presented silently, on the theory that you were
+looking at it. You are not always looking at it. From 3.1.3 every fresh
+incoming text raises its popup and plays its sound unconditionally:
+window closed to the tray, minimized, open beside your work, or sitting
+on that exact conversation. Only two things stay quiet: notifications
+set to Off, and messages Windows first saw more than 30 minutes ago
+(old news never ambushes you late). Unread badges still respect what is
+visibly on screen, so the thread you are actively reading does not
+accumulate a stale count. The taskbar flash is added whenever the
+window is not the active one.
+
+The list steers to the new text
+When a text arrives, the conversation list scrolls on its own so the
+conversation that just moved to the top is actually visible, however
+far down you had scrolled. It scrolls only: your selection and the
+thread you are reading are never hijacked. Together with the popup, the
+sound, and the unread badge, a new arrival is now impossible to miss
+with the app in any state.
+
+Hide zones: two actions per row
+The accidental design you liked is now the intended design. Every
+conversation row has two sides: the left opens it, the right edge hides
+it. A conversation with unread messages advertises the hide action with
+the full accent eye-off chip on hover. An already-read conversation
+stays calm: hovering raises only a soft accent shade along its right
+edge, and when your cursor is inside the zone itself the shade deepens
+and a faint eye-off ghost appears with the pointer cursor, a subtle
+"clicking here does something" exactly as requested. The click target
+is the full-height right zone, comfortably larger than the old chip,
+shared precisely between the painter and the mouse so what you see is
+what you hit. Undo and the Hidden button behave as before.
+
+Validation
+- 117 automated tests pass: everything from 3.1.2 plus new regressions
+  pinning the always-alert rule (no visibility gating on popups or
+  sound, unread still visibility-aware), the list steering (both reload
+  paths steer, scroll never selects or opens), and the hide-zone
+  geometry and painting split (chip on unread, clipped low-alpha shade
+  on read, zone-based click routing).
+- The live storm harness additionally proves, under a real display: a
+  popup and the alert signal fire with the conversation visibly open;
+  the steering target is consumed; read-row zone hover renders; and all
+  previous guarantees hold (flat window counts under churn, breaker
+  engagement, warden neutralization, ledger drain, no event-loop
+  stalls). Window, agent-channel, and pipeline harnesses pass
+  unchanged.
+
+Upgrade
+1. Quit via the tray menu.
+2. Extract this ZIP over the existing jrl-messages folder.
+3. Run install.bat once.
+4. Start JRL-Messages.bat and confirm v3.1.3 in the title bar.

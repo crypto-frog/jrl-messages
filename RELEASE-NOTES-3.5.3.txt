@@ -1,0 +1,64 @@
+JRL Messages 3.5.3
+==================
+(Reconstructed release. The original 3.5.3 build was lost; this note
+and its code were rebuilt from the field record, and the fix is now
+pinned by nine new tests so it cannot be lost again.)
+
+What field report #13 said
+"its says my phone is not paired in Link but it is." And the
+screenshots proved it: Windows' own Bluetooth page showed TWO "iPhone"
+entries, BOTH Connected, while this app announced "Your iPhone is not
+paired with this PC yet."
+
+What was actually wrong
+Three things, stacked.
+
+1. The per-address pairing question is BLIND. An iPhone reaches this
+   PC through a rotating anonymous address. Asking Windows "is THIS
+   address paired?" about a fresh rotation answers no, even while the
+   bond sits in Windows under the phone's real identity. The app
+   believed that answer and told you a lie.
+
+2. Two bonds, one permission. An old pairing attempt and Phone Link's
+   pairing can both survive as "iPhone" entries, and only one of them
+   carries the phone's Share System Notifications permission. The app
+   kept retrying whichever it hit first.
+
+3. One refusal ended the wizard. The guided setup stopped at the first
+   paired-pending or not-paired verdict, so a working second entry
+   never got its turn.
+
+The fix, in three parts
+
+1. THE PAIRED LIST IS THE AUTHORITY. On a refused subscription, the
+   worker and the wizard now consult the Windows paired LIST. Any
+   iPhone entry there means this PC is paired, full stop; the verdict
+   becomes the permission-switch coaching, and the "not paired with
+   this PC" line is pinned out by test whenever the list holds an
+   iPhone. The per-address record is only ever trusted when it says
+   yes.
+
+2. SIDELINE AND ROTATE. A failure sidelines the ACTUAL connected
+   address. The next attempt goes straight to the other un-sidelined
+   paired iPhone entry, connected directly by its identity (no wasted
+   by-address scan). When every entry has been tried, the set resets
+   to the most recent failure so retries alternate A, B, A, B. Retry
+   pacing follows the evidence: 8 seconds while an un-tried sibling
+   remains, the long wait only after both had their turn. A successful
+   subscription clears the slate.
+
+3. THE WIZARD KEEPS GOING. Refusal verdicts are recorded and the
+   remaining candidates still get their turn. A working second entry
+   beats an earlier refusal outright; paired-pending outranks
+   needs-phone-link; and before the harshest verdict is ever returned,
+   the paired list gets the last word and flips it to paired-pending.
+
+One more honesty fix: a paired entry NAMED iPhone that answers without
+the notification service is no longer called "probably not your
+iPhone". iPhones publish that service intermittently, and only toward
+connections they trust. The message now says the phone answered
+without the service this time, and the app moves on to the sibling.
+
+Nothing else moved. The agent, the message pipeline, and every
+messaging feature are untouched; this release is entirely inside the
+experimental Bluetooth stack and its wizard.

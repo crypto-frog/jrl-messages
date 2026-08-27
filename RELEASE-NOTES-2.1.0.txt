@@ -1,0 +1,64 @@
+JRL Messages 2.1.0 - interactive codes and professional hardening
+
+Verification-code popups
+- A detected code is shown prominently on the Windows popup itself.
+- Copy code copies only the code, directly from the popup.
+- Fill code types the code into the field that currently has the caret. It
+  never sends Enter and never runs without a deliberate click.
+- The native Win32 input layout is corrected for both 64-bit and 32-bit
+  Windows. The previous undersized structure could make Fill fail on Win64.
+- Fill never steals focus. It refuses if focus changes, a modifier key is held,
+  the target belongs to JRL Messages, or Windows blocks lower-privilege input.
+  A blocked Fill safely copies the code instead. A successful Fill does not put
+  the sensitive code into Windows clipboard history.
+- Buttons are single-action: rapid or double clicks cannot type a code twice.
+- Code popups remain for 35 seconds, appear on the monitor being used, survive
+  notification bursts, and are protected from eviction by ordinary messages.
+- Incoming contact/message text is forced to plain text inside notifications.
+- Code recognition now favours wording nearest "code", understands Unicode
+  spaces and dashes, and rejects common order, invoice, case, tracking,
+  reference, and confirmation numbers.
+- Settings can keep ordinary messages as Windows notifications while routing
+  verification codes to the interactive Copy/Fill popup.
+
+Additional reliability and UI upgrades
+- First-time history indexing now freezes a Mac ROWID boundary. Messages that
+  arrive after startup still alert immediately instead of waiting for a large
+  archive to finish indexing.
+- Mark as read and Mark all as read atomically acknowledge delayed delivery
+  events, so unread counts cannot reappear later.
+- More than 200 pending events drain in bounded pages without a hot loop or
+  stranded remainder.
+- Existing messages are rebuilt into full-text search when upgrading an older
+  database.
+- Photo View, Copy, and Save As actions are repaired, including download-first
+  handling when the original is not cached yet.
+- Settings writes are atomic, avatar colours stay stable between launches, the
+  selected conversation remains highlighted after refresh, duplicate drag/drop
+  handlers were removed, and slow healthy sync cycles no longer trigger an
+  overly aggressive watchdog restart.
+- The missed-message reconciliation, durable notification ledger, safe outbox,
+  worker-generation isolation, and self-healing network logic remain.
+
+Verification
+- All Python modules parse and compile.
+- Automated tests cover database upgrades, fixed ROWID windows, late old-dated
+  rows, first-index notification continuity, malformed-row repair, duplicate
+  notification races, unread acknowledgement, outbox safety, code detection,
+  and the exact 32/64-bit Win32 input layout and key-down/up sequence.
+
+Upgrade
+1. Close JRL Messages.
+2. Extract this ZIP over the existing jrl-messages folder and allow Windows to
+   replace files. AppData settings and the local message database are separate
+   and are not removed.
+3. Run install.bat once.
+4. Start JRL-Messages.bat and confirm the title bar shows v2.1.0.
+5. In Settings, choose Interactive popup (Copy/Fill), press Test, switch to a
+   harmless text field such as Notepad, then try Copy code and Fill code.
+
+Boundary
+Windows cannot retrieve a text until Apple has delivered it to the Mac Messages
+database. The Mac must be awake, Messages and BlueBubbles must be running, and
+Tailscale must connect both machines. Once BlueBubbles exposes a message row,
+the independent reconciliation path is responsible for bringing it to Windows.

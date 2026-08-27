@@ -1,0 +1,132 @@
+JRL Messages 3.1.0 - Reliable alerts, verified Wake Mac, quieter help
+
+Mac installer hotfix (August 15, 2026)
+
+- A protected com.apple.MobileSMS preferences domain no longer aborts setup.
+  The App Nap request is optional; failure is reported as a warning while the
+  launchd watchdog, power settings, and Automation self-test continue.
+
+What this release fixes
+
+There were two different missed-message symptoms and they now have separate
+repair paths:
+
+1. A text exists on the iPhone but not yet in Messages on the Mac. Windows
+   cannot query a row that the Mac has not received. Wake Mac works because
+   restarting Messages forces that upstream connection to recover. Recover
+   and an unproductive F5 check now escalate to the same guarded Wake path.
+2. A text is already in the Windows list, but no minimized popup or sound
+   appears. This was a Windows presentation problem: a lost local signal had
+   no periodic replay, rich popups had no sound, full stacks were sometimes
+   acknowledged without display, and the window exited when X was clicked.
+   All four paths are fixed.
+
+Notification reliability
+
+- The viewer independently sweeps the durable delivery ledger every 2.5
+  seconds. Agent IPC is now an acceleration hint, not a single point of
+  failure.
+- Rich popups play one explicit configurable sound per alert burst and use a
+  taskbar flash when the conversation is not visibly active.
+- Popup presentation returns Shown, Queued, or Unavailable. A ledger event is
+  never marked complete after refusal. Cards and every verification code queue
+  when three cards are already visible instead of being discarded.
+- A transient database failure while acknowledging a shown card is caught and
+  retried without replaying the sound.
+- Minimized/hidden windows are never mistaken for a visible conversation.
+- X hides the viewer to the notification area by default. The tray menu has
+  Open, Settings, and Quit. If Windows has no usable tray,
+  X exits normally rather than hiding an unrecoverable window.
+- Native notification clicks and rich-popup clicks reopen the right chat.
+- Test alert now exercises the selected style and the sound setting.
+
+Tooltips and UI
+
+- The distracting tooltip attached to the entire conversation list is gone.
+- Help tips can be Show each twice (default), Always, or Off in Settings.
+- The two-show count is persistent for stable controls, one hover counts once,
+  and tips are suppressed during clicking, dragging, and text selection.
+- Notification card geometry scales with text size and stacks are clamped to
+  the usable screen.
+- Settings now exposes alert sound and close-to-tray explicitly.
+
+Agent, sending, and upgrade safety
+
+- Both long-running singleton locks now have an infinite stale timeout, as Qt
+  requires. The old 30-second value could permit duplicate windows or agents.
+- Outbox claiming is one atomic conditional update. Even if legacy duplicate
+  agents exist, only one can cross the send boundary for a queued row.
+- Wake Mac acquires a durable Mac-maintenance lease atomically with its outbox
+  check. A send queued immediately after the button remains queued until the
+  Messages restart is safe; it cannot slip through the old count/check gap.
+- Wake no longer reports "nothing held back" just because its timer expired.
+  It requires a successful post-restart reconciliation, extends the check once
+  on a slow link, and reports an honest warning if verification never finishes.
+- The supervisor has its own per-user singleton, remains resident when it
+  adopts an existing agent, monitors a durable heartbeat, and checks a clean
+  stop every 0.5 seconds for reliable handoff.
+- Stop waits for endpoint shutdown. install.bat stops before changing the
+  environment, also finds an agent started from another extracted folder, and
+  requires an exact-version hello after launch.
+- In-app version handoff waits for the real agent disconnect and retries the
+  supervisor until a matching version answers; it no longer relies on a fixed
+  2.2-second delay.
+- The Socket.IO polling dependency (requests) is now installed explicitly.
+
+Reconciliation hardening
+
+- Suspiciously short bounded ROWID windows receive a second read and are
+  merged by ROWID. A sparse retry cannot overwrite an earlier complete copy.
+- The newest 200 Mac ROWIDs are independently re-audited every 30 seconds,
+  catching old-dated iCloud insertions and healing recent window omissions.
+- A durable rolling archive audit revisits one older 100-ROWID window each
+  minute, so a row omitted twice is still repaired after it leaves the tail.
+- A lower/empty Mac maximum must be seen three times before the durable cursor
+  or notification floor is reset. One temporary empty database during a
+  Messages relaunch cannot poison progress or generate historical alerts.
+- Transient incomplete pages keep the authoritative ROWID path armed rather
+  than disabling it for the session. Protocol fallback is periodically
+  re-probed.
+- The recent-head audit now re-upserts known messages, repairing edited text
+  and attachments that became complete after their first sparse response.
+- Initial sync will not ingest silently before the notification floor is
+  durably frozen.
+
+Mac package
+
+- The liveness job runs every 2 minutes. The local daily restart is now an
+  explicit opt-in because a Mac-only schedule cannot fence the Windows
+  outbox; guarded Windows Auto Wake is the safe default. When enabled, both
+  jobs share one lock and the daily action waits up to 90 seconds for a tick.
+- A restart captures the old Messages PID, waits for exit, uses a bounded TERM
+  fallback, requires a different new PID, and requires an AppleScript response
+  before writing success. Merely accepting an `open` request is not success.
+- Tick and restart have separate persistent error markers. `--status` shows
+  the last verified tick, last verified restart, and unresolved errors.
+- The installer validates its schedule, lints both plists, resolves the real
+  Messages bundle ID for an optional App Nap request, unloads old jobs before atomic replacement,
+  and verifies launchd-context Automation access. With --daily-restart it
+  also performs one controlled restart test; the default does not interrupt
+  Messages. `--no-daily-restart` unloads an already running daily job.
+
+Upgrade steps
+
+1. If upgrading from 3.0.0, restart Windows once. The old stale-lock defect may
+   already have created background copies that cannot all be reached through
+   the one current pipe. This one reboot clears them permanently.
+2. Extract the ZIP into a permanent folder and run install.bat.
+3. Start JRL-Messages.bat and confirm v3.1.0 in the title/settings.
+4. Copy the mac folder to the Mac and rerun:
+      bash install-jrl-keepalive.sh --with-power
+   This installs the safe liveness-only default. A local daily restart is
+   available with --daily-restart, but guarded Windows Auto Wake is preferred.
+5. In BlueBubbles, confirm Start on boot and Keep macOS Awake are both on.
+6. In JRL Settings, choose the notification style, leave Alert sound enabled,
+   choose the Help tips policy, and press Test alert with the app minimized.
+
+Important self-test note
+
+Apple can mark a message sent to the same Apple identity as "from me." Those
+messages intentionally appear in the list without a normal incoming alert.
+Use Settings > Test alert to verify popup/sound behavior, and use Verify line
+to measure end-to-end relay timing.

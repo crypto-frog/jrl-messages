@@ -1,0 +1,63 @@
+JRL Messages 2.2.0 - global recovery and responsive UI
+
+Message recovery
+- A new accent-coloured Recover button performs a non-destructive global
+  reconnect and rescan. It creates fresh REST, Socket.IO, polling, sending,
+  and attachment workers without deleting messages, settings, attachments,
+  hidden state, unread state, or durable outgoing work.
+- Recover stays disabled until the new worker generation completes a global
+  check. The footer reports how many messages were restored. Ctrl+Shift+R is
+  the keyboard shortcut.
+- Refresh/F5 now checks the open conversation, refreshes the chat list, and
+  audits the global newest-message page. This also catches a contact moving
+  between sibling iMessage and SMS conversation identifiers.
+- A cursor-independent audit of the newest 250 messages runs approximately
+  every minute, with immediate forced checks on startup, reconnect, Refresh,
+  and Recover. A separate wall-clock 24-hour audit runs periodically.
+- A ROWID window may no longer advance its durable cursor when the frozen
+  snapshot row is missing from an apparently successful server response.
+  The same window is retried through a fresh connection instead.
+- Worker generations are invalidated at the beginning of teardown so a queued
+  callback from a retired connection cannot land during the restart gap.
+
+Professional UI and accessibility
+- Most recent is now a wide, true accent capsule with a scalable code-drawn
+  arrow, clear tooltip, focus treatment, and responsive dimensions.
+- New uses a heavier filled pencil, a visible label, and the selected accent.
+- Hidden uses a conventional visibility-off icon plus a visible label.
+- New, Hidden, Recover, Settings, group, refresh, attachment, emoji, send,
+  hidden-chat close, and attachment-chip close targets respond to text scale.
+- Action controls have clearer accessible names, tooltips, pointing cursors,
+  and keyboard focus styling.
+- Conversation titles/subtitles are forced to plain text. The connection
+  tooltip now distinguishes the newest message synchronized to Windows from
+  the actual last successful global check.
+
+Small logic hardening
+- Hiding a chat now acknowledges a pending unread ledger entry atomically, so
+  a delayed GUI drain cannot make its unread count reappear.
+- The existing verification-code Copy/Fill popup, notification ledger,
+  no-double-send outbox rules, first-run notification floor, and photo/search
+  fixes remain intact.
+
+Validation
+- 37 automated reliability, migration, verification-code, UI-contract, and
+  thread-safety tests pass.
+- All Python modules compile successfully.
+
+Upgrade
+1. Close JRL Messages.
+2. Extract this ZIP over the existing jrl-messages folder and allow Windows to
+   replace files. AppData settings and the local message database are separate
+   and are not removed.
+3. Run install.bat once.
+4. Start JRL-Messages.bat and confirm the title bar shows v2.2.0.
+5. Try New, Hidden, Recover, and Most recent at each preferred text size.
+6. To test recovery, press Recover or Ctrl+Shift+R and wait for the footer to
+   report Recovery complete.
+
+Boundary
+The Windows app can reconcile every message BlueBubbles exposes, but it cannot
+retrieve a text that Apple has not yet inserted into Messages on the Mac. The
+Mac must be awake, Messages and BlueBubbles must be running, and Tailscale must
+connect both machines.

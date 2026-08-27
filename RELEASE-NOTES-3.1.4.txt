@@ -1,0 +1,75 @@
+JRL Messages 3.1.4 - Alerts made unkillable, master switches, real quit
+
+The silent-alert failure, answered structurally
+3.1.3 went completely quiet on one machine while messages kept arriving.
+The alert pipeline had single points of failure and reported nothing
+when one of them tripped. 3.1.4 rebuilds it so silence cannot happen
+silently again:
+
+1. Sound is decoupled from everything. The alarm now plays for every
+   fresh burst BEFORE any popup machinery runs. Even if a card can
+   never be created on a given machine, you hear every arrival. (A
+   throttle keeps it to one sound per burst.)
+2. The two channels back each other up. If the Windows-toast style is
+   selected but Windows cannot show toasts, the app's own card is used;
+   if the card channel refuses, the Windows toast is used. Only when
+   both truly fail does the alert wait for retry, loudly, in the log.
+3. Everything reports. Every alert attempt writes its outcome to the
+   Activity panel: "popup card · <name>", "popup queued (cards busy)",
+   "Windows toast unavailable; using the popup card", "alert could not
+   be shown, retrying". The whole alert sweep is also now exception
+   guarded, and any error lands in the Activity panel and the log
+   instead of dying invisibly inside a timer.
+4. Test alert became a diagnosis. It runs the real pipeline with your
+   real switches and writes what happened, including whether the sound
+   call itself succeeded on your Windows sound scheme.
+
+The switches you asked for
+Settings now has two plain master switches, independent of each other
+and of the style: Popups (show a popup for every new message) and Sound
+(play a sound for every new message). Popups off with sound on gives
+sound-only operation, and the unread badge and list steering still
+work. The old "Off" style choice is gone; an existing Off setting
+migrates to the Popups switch automatically. The style picker now only
+chooses how a popup looks (interactive card or Windows toast).
+
+A real quit, and no more Task Manager
+- A round power button now sits beside the Settings gear: it quits the
+  window completely, every time. It carries a drawn icon that follows
+  your accent color and text size, with a quiet red hover so it reads
+  as "exit". Background collection by the agent continues, exactly as
+  designed.
+- Behind it stands a hard guarantee: if anything ever tried to keep the
+  process alive after shutdown, it is ended outright within seconds.
+  Nothing is ever left running for Task Manager to clean up.
+- Launching the app while a copy is already running (for example hidden
+  in the tray) no longer shows an error. The new launch simply asks the
+  running window to come forward and exits, so double-clicking the
+  shortcut always feels like opening the app.
+- The ✕ still hides to the notification area by default so alerts keep
+  flowing; the tray menu Quit and the power button both end it fully.
+  The Close button setting is unchanged for those who want ✕ to quit.
+
+Validation
+- 126 automated tests pass: everything from 3.1.3 plus new regressions
+  for the sound decoupling, both fallback directions, the recorded
+  outcomes, the master switches and their save path, the legacy Off
+  migration, sound-only completion of the alert ledger, the guarded
+  sweep, the quit button and its process-exit guarantee, and the
+  second-launch activation path.
+- The live storm harness additionally proves under a real display:
+  popups off + sound on rings and completes the ledger with no card;
+  popups on shows the card and records it; the system style without a
+  usable tray still alerts and says why; Test alert reports its sound;
+  and a second-launch ping brings a hidden window forward. All previous
+  guarantees hold, and the window, agent-channel, and pipeline
+  harnesses pass unchanged.
+
+Upgrade
+1. Quit via the new power button (or the tray menu).
+2. Extract this ZIP over the existing jrl-messages folder.
+3. Run install.bat once.
+4. Start JRL-Messages.bat and confirm v3.1.4 in the title bar.
+5. Press Test alert once in Settings; then open the Activity panel from
+   the connection chip. If your machine ever goes quiet again, that
+   panel now contains the exact reason, and Copy all sends it to me.

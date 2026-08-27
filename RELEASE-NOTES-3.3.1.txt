@@ -1,0 +1,58 @@
+JRL Messages 3.3.1 - Your iPhone now appears in the picker
+
+The bug you found
+You scanned and saw your Bose speaker but never your iPhone. That was
+my bug, built on top of an Apple behavior: iPhones deliberately
+broadcast Bluetooth with no name and a rotating anonymous address so
+strangers cannot identify or track them. Your phone WAS in the scan
+results the whole time; the picker threw away nameless devices, which
+threw away every iPhone on earth. Speakers happily shout their names,
+which is why they showed.
+
+What 3.3.1 does
+1. The picker now reads the Windows PAIRED device list first, where
+   your iPhone lives under its real name with its stable address.
+   Since Phone Link already paired your phone to Windows, it will
+   simply be there, listed first and tagged "paired with this PC".
+   No live scan is even needed to find it.
+2. The live scan no longer discards anonymous devices: anything
+   broadcasting Apple manufacturer data is listed and labeled
+   "Apple device (name hidden while broadcasting)".
+3. The background link resolves your phone the same way: paired
+   identity first (which also heals a re-pairing that changed the
+   address, by matching the remembered name), then the address, then a
+   scan that recognizes anonymous Apple broadcasters, and it only
+   auto-picks an anonymous one when exactly one is in range so it can
+   never latch onto your AirPods.
+4. The probe tool (tools\phone_link_probe.py) got the same treatment,
+   so its listing now matches what the app sees.
+
+Two smaller bugs the investigation shook out
+- For the first ten minutes after a PC reboot, a connection-loss entry
+  would silently skip the bell (a rate limiter mistook boot-time zero
+  for a timestamp). Found because it made my own test harness fail
+  once per fresh container; fixed and pinned with tests.
+- A link flapping at the edge of Bluetooth range could fill the bell
+  with "restored" entries while suppressing the losses. Transitions
+  now record in strict pairs: first connect, one loss, one recovery,
+  then quiet until things are genuinely stable again.
+
+About Phone Link
+You can leave Phone Link installed or remove it; this app no longer
+depends on it either way. Its one lasting contribution is the pairing
+it already created, which is exactly what the new picker uses. If you
+do remove it, the pairing stays (it belongs to Windows, not to Phone
+Link), so nothing needs redoing.
+
+Validation
+184 unit tests (9 new: address formatting, paired-first ordering and
+dedupe, Apple-broadcast labeling, boot-clock transitions, flap
+symmetry) and all four live harnesses green, three consecutive storm
+runs. The radio handshake itself still proves out on your machine, so
+the honest next step is yours: upgrade, open the picker, and your
+iPhone should be the first row.
+
+To upgrade
+Quit with the round power button, extract over the old folder, run
+install.bat once, confirm v3.3.1, then Settings > Alerts > Choose
+iPhone.

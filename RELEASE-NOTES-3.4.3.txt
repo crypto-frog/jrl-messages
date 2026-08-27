@@ -1,0 +1,58 @@
+JRL Messages 3.4.3 - You are paired. The app now knows it, and keeps it.
+
+Where things actually stand
+Your last two reports show the pairing is WORKING now: the prompt
+reaches the phone, you approve it, and the phone shows Elmo as
+connected. Two last problems remained, one mine and one Apple's.
+
+Mine: when the phone was paired but still refused the notification
+subscription, the app concluded the bond must be stale and DESTROYED
+it, then paired again, endlessly. That loop is gone. A bond created in
+the current ceremony is never torn down; the stale-bond reset runs at
+most once and only for genuinely old trusts. When the app finds itself
+paired but refused, it now treats that as a WIN: it saves your phone,
+ends the ceremony with clear instructions, and the background link
+quietly retries every minute so everything completes BY ITSELF the
+moment the phone-side switch is flipped. No more trying and trying.
+
+Apple's: because this pairing is a pure low-energy bond, your iPhone
+does not recognize Elmo as a Windows PC the way the old classic
+pairing did. It shows a plain placeholder, asks what KIND of device
+Elmo is, and hides the (i) until you answer. So the final steps on the
+phone are:
+
+1. Settings > Bluetooth > Elmo. When it asks what kind of device this
+   is, pick Other (it only affects audio routing, nothing else).
+2. The (i) appears after that. Open it.
+3. Turn ON Share System Notifications. If that switch is not listed
+   yet, leave the app running near the phone for one minute (the
+   link's retry is what makes iOS add the switch), then reopen the
+   (i).
+4. Done. Within a minute the bell should say "iPhone link connected".
+   Then email yourself and lock the phone for the first mirrored
+   notification.
+
+All of this coaching now appears verbatim in the app itself: the
+ceremony ends with it, and the background link's status says it too,
+with your PC's actual name, instead of the old generic pairing advice.
+
+Also in 3.4.3
+- The two bonded identities Windows now reports are listed gently as
+  "bonded identity (reached via its anonymous broadcast instead)"
+  rather than as connection failures; anonymous broadcasts are tried
+  first since they are the connectable form.
+- One more calling form for the Windows device queries (two of the
+  three paired lookups still spoke a different dialect on your
+  machine).
+
+Validation
+206 unit tests, including a scripted reproduction of your exact
+situation: paired, subscription refused, and the test proves the bond
+is never destroyed, the ceremony ends in the paired-waiting state with
+the switch coaching, and the background link reports the right side to
+fix. All four live harnesses green.
+
+To upgrade
+Power button, extract, install.bat, confirm v3.4.3. Since you are
+already paired, you likely do not even need the ceremony again: just
+do the four phone-side steps above and watch the bell.

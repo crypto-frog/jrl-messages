@@ -1,0 +1,59 @@
+JRL Messages 3.3.2 - Find my iPhone: identification by proof
+
+What your screenshot showed
+Two failures at once. The Windows paired list came back empty (so your
+phone was not sitting at the top under its real name the way it should
+have), and the remaining Apple entries were all anonymous rotating
+addresses, which no human should be asked to choose between. Worse, my
+paired-list failure was silent: it logged to a debug channel nobody
+sees. Both of those are fixed, and the whole approach got stronger.
+
+The headline: Find my iPhone
+The picker now has a Find my iPhone button that identifies your phone
+by proof instead of by name or address. Each Apple device in range is
+briefly asked one question: do you serve Apple's notification service
+to this PC? Only an iPhone that is paired with this PC answers yes, so
+a yes is not a guess, it is your phone. The probe is a harmless
+glance: it never pairs and never subscribes, so pointing it at a
+neighbor's device does nothing to them. When the verified row appears
+(marked "YOUR IPHONE - verified"), press OK and you are done.
+
+Also in this release
+1. The paired-device lookup now asks Windows three different ways,
+   including the same association-endpoint query the Windows Settings
+   page itself uses, for both the LE and the classic (voice) sides.
+   Your phone's real name from the classic pairing now shows too.
+2. Every discovery step reports what it found or exactly why it
+   failed, in the picker itself and in the Activity panel. No more
+   silently empty lists.
+3. Anonymous Apple devices now carry a signal-strength hint (very
+   close, nearby, in range) and sort strongest first, so the phone in
+   your hand tops the anonymous group.
+4. The background link uses the same proof to heal itself: when the
+   phone's rotating address changes and the stored one stops working,
+   the app probes the strongest Apple devices nearby, finds the one
+   that serves notifications to this PC, reconnects, and remembers
+   the new address automatically. You never re-pick.
+5. If you ever do pick the wrong device, the link now says exactly
+   that ("does not serve iPhone notifications, probably not your
+   iPhone") instead of a generic connection error, and starts looking
+   for the right one on its own.
+
+Proof, per this project's standard
+The radio cannot run in my build environment, so this release adds the
+next best thing: the entire worker session now runs end to end in the
+test suite against a scripted radio: subscription order, the
+notification fetch, fragmented reassembly, the app-name lookup, the
+learned-address signal, the texts-never-mirrored rule, and the
+wrong-device diagnosis all execute for real with only the radio layer
+scripted. 190 unit tests and all four live harnesses pass.
+
+To upgrade
+Quit with the round power button, extract over the old folder, run
+install.bat once, confirm v3.3.2, then Settings > Alerts > Choose
+iPhone > Find my iPhone. Keep the phone unlocked and next to the PC
+the first time; if Windows or the phone shows a pairing or allow
+prompt, accept it. If Find reports that nothing proved to be your
+iPhone, the fix is almost always on the phone: Settings > Bluetooth >
+tap the (i) beside this PC > turn on Share System Notifications, then
+Find again.
