@@ -38,7 +38,7 @@ Field evidence suggests one more layer: the phone may scope ANCS authorization *
 
 ### If you want to work on it
 
-Start with `app/phone/link.py` and `app/phone/ancs.py`, the `tests/test_phone_link.py` suite (72 tests encoding everything learned so far), and release notes 3.3.0 through 3.5.3 in order; they are a complete field diary. The doctrine section of [CONTRIBUTING.md](https://github.com/OWNER/jrl-messages/blob/main/CONTRIBUTING.md) lists the radio invariants that must survive any redesign. Useful background: Apple's ANCS specification, Bluetooth LE privacy (RPA resolution), and the Windows.Devices.Bluetooth pairing and GATT session APIs.
+Start with `app/phone/link.py` and `app/phone/ancs.py`, the `tests/test_phone_link.py` suite (72 tests encoding everything learned so far), and release notes 3.3.0 through 3.5.3 in order; they are a complete field diary. The doctrine section of [CONTRIBUTING.md](https://github.com/crypto-frog/jrl-messages/blob/main/CONTRIBUTING.md) lists the radio invariants that must survive any redesign. Useful background: Apple's ANCS specification, Bluetooth LE privacy (RPA resolution), and the Windows.Devices.Bluetooth pairing and GATT session APIs.
 
 ## Other known limits
 

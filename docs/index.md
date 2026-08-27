@@ -11,11 +11,11 @@ JRL Messages puts full iMessage on a Windows PC: blue bubbles, group chats, atta
 
 It was built by a practicing lawyer with one requirement: **never miss a message.** The whole design follows from that.
 
-- [Repository and source code](https://github.com/OWNER/jrl-messages)
+- [Repository and source code](https://github.com/crypto-frog/jrl-messages)
 - [Installation guide](installation.html)
 - [Architecture](architecture.html)
 - [Known issues and open problems](known-issues.html)
-- [Report a bug or contribute](https://github.com/OWNER/jrl-messages/issues)
+- [Report a bug or contribute](https://github.com/crypto-frog/jrl-messages/issues)
 
 ## The idea in one diagram
 
@@ -53,4 +53,4 @@ One feature is explicitly experimental and unreliable today: mirroring the iPhon
 
 ## Get involved
 
-The project welcomes field reports, code, and Mac-side hardening. Start with the [repository README](https://github.com/OWNER/jrl-messages#readme), then [CONTRIBUTING](https://github.com/OWNER/jrl-messages/blob/main/CONTRIBUTING.md). Bug reports with a version number, an Activity log, and a screenshot have driven every fix in this project's history; the issue templates show you exactly what to include.
+The project welcomes field reports, code, and Mac-side hardening. Start with the [repository README](https://github.com/crypto-frog/jrl-messages#readme), then [CONTRIBUTING](https://github.com/crypto-frog/jrl-messages/blob/main/CONTRIBUTING.md). Bug reports with a version number, an Activity log, and a screenshot have driven every fix in this project's history; the issue templates show you exactly what to include.

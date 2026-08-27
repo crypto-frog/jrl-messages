@@ -7,7 +7,7 @@ title: Installation
 
 [Home](index.html) | [Architecture](architecture.html) | [Known issues](known-issues.html)
 
-The authoritative, step-by-step guides ship inside the repository and are written for careful non-programmers: [SETUP.md](https://github.com/OWNER/jrl-messages/blob/main/SETUP.md) for the whole chain and [MAC-SETUP.md](https://github.com/OWNER/jrl-messages/blob/main/MAC-SETUP.md) for hardening the Mac. This page is the orientation layer: what you need, what gets installed, and in what order.
+The authoritative, step-by-step guides ship inside the repository and are written for careful non-programmers: [SETUP.md](https://github.com/crypto-frog/jrl-messages/blob/main/SETUP.md) for the whole chain and [MAC-SETUP.md](https://github.com/crypto-frog/jrl-messages/blob/main/MAC-SETUP.md) for hardening the Mac. This page is the orientation layer: what you need, what gets installed, and in what order.
 
 ## What you need
 
@@ -37,7 +37,7 @@ Optional, only for the experimental iPhone notification mirroring feature: a Blu
 **3. Windows PC (15 minutes).**
 
 - Install Python 3.12 and Tailscale (same Tailscale account as the Mac).
-- Download the latest release from the [releases page](https://github.com/OWNER/jrl-messages/releases) and extract it to a fresh folder. Always extract fresh; never unzip a new version on top of an old folder.
+- Download the latest release from the [releases page](https://github.com/crypto-frog/jrl-messages/releases) and extract it to a fresh folder. Always extract fresh; never unzip a new version on top of an old folder.
 - Double-click `install.bat`. It creates a private virtual environment in the folder, installs the Python dependencies, stops any older agent safely, registers the background agent to start at every logon, sets up the hourly failsafe, and starts the agent.
 - Launch the app with `JRL-Messages.bat`. In Settings, enter the server address (the Mac's Tailscale name or 100.x address with the BlueBubbles port) and the server password. The password is stored in Windows Credential Manager, never in a file.
 - Watch the connection indicator in the bottom-left: an orbiting arc means connected and checking. Send yourself a text; it should appear and alert.
@@ -58,4 +58,4 @@ Extract the new version to a **new** folder and run its `install.bat`. The insta
 
 ## If something breaks
 
-The in-app Activity window with its "Copy all" button is the first stop; [SETUP.md](https://github.com/OWNER/jrl-messages/blob/main/SETUP.md) has a troubleshooting section keyed to the connection indicator's states. When filing an issue, include the version from the title bar, the Activity log, and a screenshot, and redact your server address.
+The in-app Activity window with its "Copy all" button is the first stop; [SETUP.md](https://github.com/crypto-frog/jrl-messages/blob/main/SETUP.md) has a troubleshooting section keyed to the connection indicator's states. When filing an issue, include the version from the title bar, the Activity log, and a screenshot, and redact your server address.
