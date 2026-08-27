@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>{% if page.title and page.title != site.title %}{{ page.title }} · {{ site.title }}{% else %}{{ site.title }} · {{ site.description }}{% endif %}</title>
+<meta name="description" content="{{ page.blurb | default: site.description }}">
+<meta property="og:title" content="{{ page.title | default: site.title }}">
+<meta property="og:description" content="{{ page.blurb | default: site.description }}">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="assets/css/site.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%236c74e8'/><text x='50' y='68' font-size='56' font-family='system-ui,sans-serif' font-weight='700' fill='%23fff' text-anchor='middle'>J</text></svg>">
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">J</span>
+      <span class="brand-text">JRL Messages<span class="brand-ver">v3.6.0</span></span>
+    </a>
+    <input type="checkbox" id="navtoggle" class="navtoggle">
+    <label for="navtoggle" class="navburger" aria-label="Menu"><span></span><span></span><span></span></label>
+    <nav class="nav">
+      <a href="index.html"{% if page.nav == 'overview' %} class="on"{% endif %}>Overview</a>
+      <a href="architecture.html"{% if page.nav == 'architecture' %} class="on"{% endif %}>Architecture</a>
+      <a href="installation.html"{% if page.nav == 'installation' %} class="on"{% endif %}>Installation</a>
+      <a href="faq.html"{% if page.nav == 'faq' %} class="on"{% endif %}>FAQ</a>
+      <a href="known-issues.html"{% if page.nav == 'known-issues' %} class="on"{% endif %}>Known issues</a>
+      <a class="ghlink" href="https://github.com/crypto-frog/jrl-messages">GitHub &#8599;</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+{{ content }}
+</main>
+
+<footer class="foot">
+  <div class="foot-in">
+    <div class="foot-brand">
+      <span class="brand-mark sm">J</span>
+      <div>
+        <strong>JRL Messages</strong>
+        <p>A reliability-first iMessage client for Windows. Bring your own Mac.</p>
+      </div>
+    </div>
+    <div class="foot-cols">
+      <div>
+        <h4>Docs</h4>
+        <a href="index.html">Overview</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="installation.html">Installation</a>
+        <a href="faq.html">FAQ</a>
+        <a href="known-issues.html">Known issues</a>
+      </div>
+      <div>
+        <h4>Project</h4>
+        <a href="https://github.com/crypto-frog/jrl-messages">Repository</a>
+        <a href="https://github.com/crypto-frog/jrl-messages/releases">Releases</a>
+        <a href="https://github.com/crypto-frog/jrl-messages/issues">Issues</a>
+        <a href="https://github.com/crypto-frog/jrl-messages/blob/main/CONTRIBUTING.md">Contributing</a>
+        <a href="https://github.com/crypto-frog/jrl-messages/security/advisories/new">Report a vulnerability</a>
+      </div>
+      <div>
+        <h4>Guides</h4>
+        <a href="https://github.com/crypto-frog/jrl-messages/blob/main/SETUP.md">SETUP.md</a>
+        <a href="https://github.com/crypto-frog/jrl-messages/blob/main/MAC-SETUP.md">MAC-SETUP.md</a>
+        <a href="https://github.com/crypto-frog/jrl-messages/blob/main/CHANGELOG.md">Changelog</a>
+      </div>
+    </div>
+  </div>
+  <div class="foot-legal">
+    <span>Not affiliated with Apple Inc. iMessage is a trademark of Apple Inc. Screenshots are redacted.</span>
+    <span>MIT licensed &middot; built by a practicing lawyer who needed to never miss a message</span>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,4 +1,6 @@
 title: JRL Messages
 description: A reliability-first iMessage client for Windows. Bring your own Mac.
-theme: jekyll-theme-cayman
 show_downloads: false
+plugins: []
+exclude:
+  - README.md

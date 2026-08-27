@@ -1,0 +1,242 @@
+---
+layout: default
+title: Known issues
+nav: known-issues
+blurb: The headline open problem — iPhone notification mirroring over Bluetooth — explained in full, plus the other known limits.
+---
+
+<div class="pagehead">
+  <div class="wrap">
+    <span class="eyebrow">Known issues and open problems</span>
+    <h1>What does not work, stated plainly</h1>
+    <p class="lede">
+      One feature is experimental and unreliable. It is quarantined from messaging, off by default,
+      and it is the project&rsquo;s standing invitation to contributors.
+    </p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <div class="callout good">
+      <h3>Read this first</h3>
+      <p style="margin-bottom:0">
+        <strong>Messaging is not affected by anything on this page.</strong> Sending, receiving, history,
+        group chats, attachments and notifications <em>for your messages</em> travel over the Mac relay
+        (Tailscale + BlueBubbles) and involve no Bluetooth whatsoever. With the Bluetooth feature off
+        &mdash; the default &mdash; JRL Messages is a complete and dependable iMessage client, and it runs
+        fine on a PC with no Bluetooth hardware.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="tight">
+  <div class="wrap">
+    <h2>The headline issue: iPhone notification mirroring over Bluetooth <span class="tag exp">Experimental</span></h2>
+    <p class="sub">
+      <strong>Status: off by default, sometimes works, usually does not.</strong>
+      This is the project&rsquo;s primary open problem.
+    </p>
+
+    <h3 style="margin-top:34px">What the feature is</h3>
+    <div class="prose">
+      <p>
+        iMessage itself flows over the Mac relay and is rock solid; that is the core product.
+        Separately, since v3.3.0 the app can try to mirror the iPhone&rsquo;s <strong>own notification
+        banners</strong> (from any app on the phone: banking, calendars, other messengers) to the PC, so
+        the phone can stay in a drawer. iOS exposes exactly one sanctioned channel for this: the
+        <strong>Apple Notification Center Service (ANCS)</strong>, a Bluetooth LE GATT service the phone
+        offers to paired devices it trusts.
+      </p>
+    </div>
+
+    <div class="diagram" style="margin:30px 0">
+      <svg viewBox="0 0 1100 300" role="img" aria-label="Diagram: the iPhone advertises with rotating private addresses and offers the ANCS notification service only to trusted connections. Microsoft Phone Link owns the pairing bond and receives notifications successfully, while JRL Messages, attaching to the same bond as a second subscriber, is refused. The open question is whether ANCS authorisation is scoped per connection.">
+        <defs>
+          <marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#3ecf8e"></path>
+          </marker>
+          <marker id="ab2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#e2585d"></path>
+          </marker>
+        </defs>
+
+        <!-- iPhone -->
+        <rect class="dg-node accent" x="20" y="78" width="210" height="132" rx="13"></rect>
+        <text class="dg-title" x="125" y="108" text-anchor="middle">iPhone</text>
+        <text class="dg-sub" x="125" y="132" text-anchor="middle">ANCS over Bluetooth LE</text>
+        <text class="dg-sub" x="125" y="152" text-anchor="middle">rotating private addresses</text>
+        <text class="dg-sub" x="125" y="172" text-anchor="middle">served only to connections</text>
+        <text class="dg-sub" x="125" y="190" text-anchor="middle">it currently trusts</text>
+
+        <!-- bond -->
+        <rect class="dg-node" x="300" y="112" width="180" height="64" rx="11"></rect>
+        <text class="dg-title" x="390" y="138" text-anchor="middle">The pairing bond</text>
+        <text class="dg-sub" x="390" y="158" text-anchor="middle">created by Phone Link</text>
+
+        <path class="dg-edge" d="M234 144 H296"></path>
+
+        <!-- success path -->
+        <path d="M484 132 C 560 132, 580 74, 656 74" class="dg-edge" stroke="#3ecf8e" marker-end="url(#ab)"></path>
+        <rect x="662" y="42" width="418" height="66" rx="11" fill="rgba(62,207,142,.09)" stroke="rgba(62,207,142,.36)" stroke-width="1.3"></rect>
+        <text class="dg-title" x="684" y="70" fill="#3ecf8e">Microsoft Phone Link &mdash; the bond owner</text>
+        <text class="dg-sub" x="684" y="92">holds &ldquo;Share System Notifications&rdquo; &middot; banners arrive</text>
+
+        <!-- refused path -->
+        <path d="M484 156 C 560 156, 580 214, 656 214" class="dg-edge" stroke="#e2585d" stroke-dasharray="6 5" marker-end="url(#ab2)"></path>
+        <rect x="662" y="182" width="418" height="66" rx="11" fill="rgba(226,88,93,.09)" stroke="rgba(226,88,93,.36)" stroke-width="1.3"></rect>
+        <text class="dg-title" x="684" y="210" fill="#e2585d">JRL Messages &mdash; second subscriber, same bond</text>
+        <text class="dg-sub" x="684" y="232">attach-only, never pairs &middot; subscribe usually refused</text>
+
+        <text class="dg-label" x="20" y="272">OPEN QUESTION &mdash; is ANCS authorisation scoped per connection, not per bond?</text>
+        <text class="dg-sub" x="20" y="292">If so, a second subscriber may be refused by design while the first link is live.</text>
+      </svg>
+    </div>
+
+    <h3>Why it is hard, in plain terms</h3>
+    <p class="sub">Five independent difficulties stack on top of each other.</p>
+
+    <div class="steps" style="margin-top:24px">
+      <div class="step">
+        <h3>The phone hides its identity</h3>
+        <p style="margin:0">An iPhone advertises over Bluetooth LE using rotating anonymous addresses (resolvable private addresses). The &ldquo;same&rdquo; phone is a different address every time you look, and only devices holding the pairing bond can resolve the rotation. Any code that stores &ldquo;the phone&rsquo;s address&rdquo; is building on sand.</p>
+      </div>
+      <div class="step">
+        <h3>Windows answers identity questions wrongly</h3>
+        <p style="margin:0">Asking Windows &ldquo;is this address paired?&rdquo; about a fresh rotated address returns <em>no</em>, even while the bond sits in Windows under the phone&rsquo;s real identity. The 3.5.x series established the doctrine that the paired-device <strong>list</strong> is the only authority, and the per-address answer is trusted only when it says yes.</p>
+      </div>
+      <div class="step">
+        <h3>ANCS appears and disappears</h3>
+        <p style="margin:0">The phone publishes the notification service intermittently, and only toward connections it currently trusts. Seeing no ANCS on a known-paired iPhone usually means the phone is withholding it at that moment, not that you found the wrong device.</p>
+      </div>
+      <div class="step">
+        <h3>Windows caches stale service data</h3>
+        <p style="margin:0">The GATT cache can report yesterday&rsquo;s service list for today&rsquo;s connection. Every service inspection in this codebase bypasses the cache, and that rule is test-pinned.</p>
+      </div>
+      <div class="step">
+        <h3>Pairing UI on iOS is hostile to third parties</h3>
+        <p style="margin:0">The only flow that reliably produces a correct, fully-authorised bond is Microsoft Phone Link&rsquo;s own QR pairing. After a long campaign (the 3.4.x notes tell the story), the project adopted the <strong>attach-only doctrine</strong>: the default setup never initiates pairing; it rides Phone Link&rsquo;s bond and coaches the user to Phone Link when no bond exists. The app also <strong>never unpairs anything, ever.</strong></p>
+      </div>
+    </div>
+
+    <div class="prose" style="margin-top:26px">
+      <p>
+        On top of all five, duplicate bonds happen in the wild (an old pairing attempt plus Phone
+        Link&rsquo;s bond, both named &ldquo;iPhone&rdquo;), and only one of them carries the phone&rsquo;s
+        &ldquo;Share System Notifications&rdquo; permission. Current code sidelines a failing entry and
+        rotates to the other, alternating with backoff.
+      </p>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <h2>The current open question</h2>
+    <div class="prose">
+      <p>
+        Field evidence suggests one more layer: the phone may scope ANCS authorisation
+        <strong>per connection</strong>, serving notifications to Phone Link&rsquo;s live link while refusing
+        a second subscriber on the same bond. Establishing whether that is true &mdash; and if so,
+        whether a subscriber can present itself in a way the phone accepts &mdash; is genuinely new
+        territory.
+      </p>
+    </div>
+
+    <div class="callout" style="margin:24px 0">
+      <h3>The decisive experiment</h3>
+      <p style="margin-bottom:0">
+        With pairing healthy, and Phone Link&rsquo;s own window demonstrably showing a test notification:
+        <strong>does this app&rsquo;s subscribe still get refused on every paired entry?</strong>
+        Field reports containing that comparison, plus the wizard notes and Test link output, are the
+        most valuable data the project can receive. There is a dedicated issue template for exactly this.
+      </p>
+    </div>
+
+    <a class="btn primary" href="https://github.com/crypto-frog/jrl-messages/issues/new/choose">Send a pairing report</a>
+    <a class="btn" href="https://github.com/crypto-frog/jrl-messages/issues/1">The tracking issue</a>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <h2>How this limits functionality, and how it does not</h2>
+    <div class="grid g2" style="margin-top:26px">
+      <div class="card green">
+        <h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg></span>Not limited</h3>
+        <p class="muted" style="margin:0">
+          Everything about messaging. Sending, receiving, history, group chats, attachments, and
+          notifications <strong>for your messages</strong> travel over the Mac relay and involve no
+          Bluetooth whatsoever. The stack is architecturally quarantined: the messaging pipeline never
+          imports it.
+        </p>
+      </div>
+      <div class="card amber">
+        <h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 9v5M12 17.5v.5"></path><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path></svg></span>Limited</h3>
+        <p class="muted" style="margin:0">
+          Mirroring of the phone&rsquo;s <em>other</em> notifications to the PC. Until this problem is solved,
+          do not rely on it; keep Microsoft Phone Link as the fallback for those banners. If both apps
+          announce the same event, turn off notifications in one of them.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <h2>If you want to work on it</h2>
+    <div class="prose">
+      <p>
+        Start with <code>app/phone/link.py</code> and <code>app/phone/ancs.py</code>, the
+        <code>tests/test_phone_link.py</code> suite (72 tests encoding everything learned so far), and
+        release notes 3.3.0 through 3.5.3 in order &mdash; they are a complete field diary. The doctrine
+        section of
+        <a href="https://github.com/crypto-frog/jrl-messages/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>
+        lists the radio invariants that must survive any redesign.
+      </p>
+      <p>
+        Useful background: Apple&rsquo;s ANCS specification, Bluetooth LE privacy (RPA resolution), and the
+        <code>Windows.Devices.Bluetooth</code> pairing and GATT session APIs.
+      </p>
+    </div>
+
+    <div class="callout bad" style="margin-top:22px">
+      <h3>Radio invariants that must survive any redesign</h3>
+      <p style="margin-bottom:0">Never auto-unpair. Never background-pair. Never trust the GATT cache.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <h2>Other known limits</h2>
+    <div class="grid g2" style="margin-top:26px">
+      <div class="card">
+        <h3>SMS requires the iPhone to be on</h3>
+        <p class="muted" style="margin:0">Green-bubble traffic physically routes through the phone, so it needs power and service somewhere in the world. iMessage does not care where the phone is.</p>
+      </div>
+      <div class="card">
+        <h3>Some group-management actions need Private API mode</h3>
+        <p class="muted" style="margin:0">Renaming a group and adding participants depend on BlueBubbles&rsquo; Private API mode being enabled on the Mac.</p>
+      </div>
+      <div class="card">
+        <h3>The Mac must stay healthy</h3>
+        <p class="muted" style="margin:0">Sleep, App&nbsp;Nap and Messages.app idling are the enemies; the <code>mac/</code> keepalive scripts and the automatic Wake&nbsp;Mac repair exist for exactly this. A still, broken connection ring in the app means the chain is down at the Mac or Tailscale layer.</p>
+      </div>
+      <div class="card">
+        <h3>Two machines, by design</h3>
+        <p class="muted" style="margin:0">The project deliberately does not pursue Apple-protocol reverse engineering, for durability and legal reasons. See the positioning note at the end of the <a href="architecture.html">architecture</a> page.</p>
+      </div>
+    </div>
+  </div>
+</section>

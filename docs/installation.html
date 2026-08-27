@@ -1,0 +1,175 @@
+---
+layout: default
+title: Installation
+nav: installation
+blurb: What you need, what gets installed, and in what order — iPhone, Mac relay, and the Windows PC.
+---
+
+<div class="pagehead">
+  <div class="wrap">
+    <span class="eyebrow">Installation</span>
+    <h1>What you need, and in what order</h1>
+    <p class="lede">
+      The authoritative step-by-step guides ship inside the repository and are written for careful
+      non-programmers:
+      <a href="https://github.com/crypto-frog/jrl-messages/blob/main/SETUP.md">SETUP.md</a> for the whole
+      chain, and
+      <a href="https://github.com/crypto-frog/jrl-messages/blob/main/MAC-SETUP.md">MAC-SETUP.md</a> for
+      hardening the Mac. This page is the orientation layer.
+    </p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <h2>What you need</h2>
+    <p class="sub" style="margin-bottom:26px">Roughly an hour of setup, once. After that it runs by itself.</p>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th style="width:22%">Piece</th><th>Details</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>An iPhone</strong></td><td>Your normal phone, anywhere in the world. Nothing is installed on it.</td></tr>
+          <tr><td><strong>A Mac</strong></td><td>Stays at home, plugged in, signed into your Apple ID, Messages working. Clamshell mode (lid closed) is fine. This is the relay.</td></tr>
+          <tr><td><strong>A Windows PC</strong></td><td>Windows 10 or 11. This is where you read and write messages. A laptop works from anywhere.</td></tr>
+          <tr><td><strong>Python 3.12</strong></td><td>On the PC, from python.org. The installer script expects the <code>py -3.12</code> launcher.</td></tr>
+          <tr><td><strong>BlueBubbles server</strong></td><td>Free and open source, installed on the Mac. Run it in plain LAN URL mode: no Firebase, no Cloudflare proxy. Set a strong server password.</td></tr>
+          <tr><td><strong>Tailscale</strong></td><td>Free tier, installed on both the Mac and the PC, signed into the same account. It gives the Mac a stable private address reachable from anywhere.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout warn" style="margin-top:24px">
+      <p style="margin:0">
+        <strong>Optional, experimental only.</strong> The iPhone notification-mirroring feature additionally
+        wants a Bluetooth LE adapter on the PC and Microsoft Phone Link paired to the iPhone.
+        Read <a href="known-issues.html">known issues</a> before spending any time on it.
+      </p>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <h2>Order of operations</h2>
+    <div class="steps" style="margin-top:28px">
+
+      <div class="step">
+        <h3>iPhone <span class="muted" style="font-weight:400;font-size:15px">&mdash; 5 minutes</span></h3>
+        <p style="margin:0">
+          Confirm iMessage is signed in and syncing with the Mac. In Settings &rarr; Messages, turn on
+          Text Message Forwarding for the Mac if you want green-bubble SMS too.
+        </p>
+      </div>
+
+      <div class="step">
+        <h3>Mac <span class="muted" style="font-weight:400;font-size:15px">&mdash; 30 to 45 minutes, once</span></h3>
+        <ul class="clean" style="margin-bottom:0">
+          <li>Sign Messages into your Apple ID and confirm conversations appear.</li>
+          <li>Install the BlueBubbles server, set the password, note the port (default <code>1234</code>).</li>
+          <li>Install Tailscale and sign in. Note the Mac&rsquo;s tailnet name (like <code>my-mac.tail1234.ts.net</code>) or its <code>100.x.x.x</code> address.</li>
+          <li>Recommended: enable Screen Sharing so you can reach the Mac&rsquo;s screen over Tailscale from anywhere for repairs.</li>
+          <li>Run the keepalive installer from the repository&rsquo;s <code>mac/</code> folder. It configures the Mac against sleep and App&nbsp;Nap, the main causes of the &ldquo;held messages&rdquo; condition.</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h3>Windows PC <span class="muted" style="font-weight:400;font-size:15px">&mdash; 15 minutes</span></h3>
+        <ul class="clean" style="margin-bottom:0">
+          <li>Install Python 3.12 and Tailscale (the same Tailscale account as the Mac).</li>
+          <li>Download the latest release from the <a href="https://github.com/crypto-frog/jrl-messages/releases">releases page</a> and extract it to a fresh folder. <strong>Always extract fresh</strong>; never unzip a new version on top of an old folder.</li>
+          <li>Double-click <code>install.bat</code>. It creates a private virtual environment in the folder, installs the dependencies, stops any older agent safely, registers the background agent to start at every logon, sets up the hourly failsafe, and starts the agent.</li>
+          <li>Launch the app with <code>JRL-Messages.bat</code>. In Settings, enter the server address and password.</li>
+          <li>Watch the connection indicator in the bottom left: an orbiting arc means connected and checking. Send yourself a text; it should appear and alert.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <h2>The one screen you have to fill in</h2>
+    <p class="sub" style="margin-bottom:26px">
+      Settings &rarr; Connection. The server address is the Mac&rsquo;s Tailscale name (or its
+      <code>100.x</code> address) plus the BlueBubbles port. The same address works at home,
+      in court, or abroad &mdash; that is the whole point of the mesh.
+    </p>
+    <figure class="shot">
+      <img src="assets/img/settings-connection.png" alt="The Settings dialog on the Connection tab, showing the Server URL field, a masked password field, an Auto Wake Mac interval and a Test connection button." width="1884" height="1010" loading="lazy">
+      <figcaption>
+        <b>Settings &rarr; Connection.</b> The server address is redacted here. The password is stored in
+        Windows Credential Manager, never in a file. <b>Test connection</b> verifies the whole chain before you commit.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <h2>What gets installed on the PC</h2>
+    <div class="prose">
+      <p>Everything lives in the folder you extracted, plus standard per-user locations:</p>
+      <ul class="clean">
+        <li><code>.venv/</code> inside the folder: the private Python environment.</li>
+        <li>A <strong>Startup entry</strong> and an <strong>hourly scheduled task</strong> that keep the background agent alive.</li>
+        <li><strong>Per-user data</strong> (message database, config, attachment cache, logs) under the standard Windows application-data directory, separate from the app folder &mdash; so upgrading the app never touches your data.</li>
+      </ul>
+    </div>
+
+    <div class="grid g4" style="margin-top:26px">
+      <div class="card"><h3><code>JRL-Messages.bat</code></h3><p class="muted" style="margin:0">Launch the window.</p></div>
+      <div class="card"><h3><code>Stop-Agent.bat</code></h3><p class="muted" style="margin:0">Pause background collection until next logon.</p></div>
+      <div class="card"><h3><code>Uninstall-Agent.bat</code></h3><p class="muted" style="margin:0">Remove the startup registration.</p></div>
+      <div class="card"><h3><code>Debug-Console.bat</code></h3><p class="muted" style="margin:0">Run with visible output for troubleshooting.</p></div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <div class="grid g2">
+      <div>
+        <h2>Upgrading</h2>
+        <div class="prose">
+          <p>
+            Extract the new version to a <strong>new</strong> folder and run its <code>install.bat</code>.
+            The installer stops the old agent (even one running from a different folder), installs, and
+            starts the new one.
+          </p>
+          <p>
+            Your messages and settings carry over automatically because they live in the per-user data
+            directory, not the app folder. The version in the window title bar is the ground truth for
+            what is actually running.
+          </p>
+        </div>
+      </div>
+      <div>
+        <h2>If something breaks</h2>
+        <div class="prose">
+          <p>
+            The in-app <strong>Activity</strong> window with its <strong>Copy all</strong> button is the first
+            stop. <a href="https://github.com/crypto-frog/jrl-messages/blob/main/SETUP.md">SETUP.md</a> has a
+            troubleshooting section keyed to the connection indicator&rsquo;s states.
+          </p>
+          <p>
+            When filing an issue, include the version from the title bar, the Activity log, and a
+            screenshot &mdash; and <strong>redact your server address.</strong>
+          </p>
+        </div>
+        <a class="btn" href="https://github.com/crypto-frog/jrl-messages/issues/new/choose">File a report</a>
+      </div>
+    </div>
+  </div>
+</section>

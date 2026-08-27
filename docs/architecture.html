@@ -1,0 +1,439 @@
+---
+layout: default
+title: Architecture
+nav: architecture
+blurb: How JRL Messages is built and why — the two-process split, the reconciliation engine, Wake Mac, notifications, and the quarantined Bluetooth stack.
+---
+
+<div class="pagehead">
+  <div class="wrap">
+    <span class="eyebrow">Architecture</span>
+    <h1>How it is built, and why</h1>
+    <p class="lede">
+      The design goal is stated once and governs everything:
+      <strong>a message must never be silently missed.</strong>
+      Convenience, elegance and even simplicity were traded away where they conflicted with that.
+    </p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <div class="toc">
+      <h4>On this page</h4>
+      <ol>
+        <li><a href="#chain">The chain</a></li>
+        <li><a href="#split">The two-process split</a></li>
+        <li><a href="#modules">Module map</a></li>
+        <li><a href="#reconcile">The reconciliation engine</a></li>
+        <li><a href="#wake">Wake Mac</a></li>
+        <li><a href="#notify">Notifications</a></li>
+        <li><a href="#bluetooth">The experimental Bluetooth stack</a></li>
+        <li><a href="#testing">Testing philosophy</a></li>
+        <li><a href="#positioning">Positioning</a></li>
+      </ol>
+    </div>
+
+    <h2 id="chain">The chain</h2>
+    <p class="sub">Two principles picked this chain.</p>
+
+    <div class="grid g2" style="margin:24px 0 30px">
+      <div class="card">
+        <h3>1. Build what is rare, buy what shifts</h3>
+        <p class="muted" style="margin:0">Apple changes macOS constantly, so talking to Messages.app is delegated to BlueBubbles, a maintained project whose whole job is tracking those changes. The unusual part &mdash; an aggressively complete Windows client &mdash; is custom.</p>
+      </div>
+      <div class="card">
+        <h3>2. Own every link</h3>
+        <p class="muted" style="margin:0">No Firebase, no Cloudflare tunnel, no third-party relay. BlueBubbles runs in plain LAN URL mode; Tailscale makes that LAN address privately reachable from anywhere in the world.</p>
+      </div>
+    </div>
+
+    <div class="diagram">
+      <svg viewBox="0 0 1100 230" role="img" aria-label="Diagram of the message chain: iPhone to Apple's cloud to the Mac running Messages.app and BlueBubbles, then across a Tailscale WireGuard mesh to the Windows PC running the agent and window processes.">
+        <defs>
+          <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#6c74e8"></path>
+          </marker>
+        </defs>
+
+        <rect class="dg-node" x="10" y="76" width="112" height="70" rx="12"></rect>
+        <text class="dg-title" x="66" y="106" text-anchor="middle">iPhone</text>
+        <text class="dg-sub" x="66" y="126" text-anchor="middle">any location</text>
+
+        <path class="dg-flow" d="M126 111 H156" marker-end="url(#a1)"></path>
+
+        <rect class="dg-node" x="162" y="76" width="128" height="70" rx="12"></rect>
+        <text class="dg-title" x="226" y="106" text-anchor="middle">Apple&rsquo;s cloud</text>
+        <text class="dg-sub" x="226" y="126" text-anchor="middle">Apple&rsquo;s own sync</text>
+
+        <path class="dg-flow" d="M294 111 H324" marker-end="url(#a1)"></path>
+
+        <rect class="dg-node accent" x="330" y="56" width="212" height="110" rx="13"></rect>
+        <text class="dg-title" x="436" y="84" text-anchor="middle">Mac &mdash; the relay</text>
+        <text class="dg-sub" x="436" y="106" text-anchor="middle">Messages.app</text>
+        <text class="dg-sub" x="436" y="124" text-anchor="middle">chat.db</text>
+        <text class="dg-sub" x="436" y="146" text-anchor="middle">BlueBubbles: REST + Socket.IO</text>
+
+        <path class="dg-flow" d="M546 100 H716" marker-end="url(#a1)"></path>
+        <path class="dg-flow" d="M716 126 H550" marker-end="url(#a1)" opacity=".5"></path>
+        <rect x="576" y="36" width="114" height="26" rx="8" fill="rgba(62,207,142,.1)" stroke="rgba(62,207,142,.36)" stroke-width="1.2"></rect>
+        <text class="dg-sub" x="633" y="53" text-anchor="middle" fill="#3ecf8e">TAILSCALE</text>
+        <text class="dg-sub" x="633" y="160" text-anchor="middle">WireGuard mesh &middot; stable private address</text>
+
+        <rect class="dg-node" x="722" y="20" width="368" height="192" rx="14"></rect>
+        <text class="dg-label" x="742" y="45">WINDOWS PC</text>
+
+        <rect class="dg-node accent" x="740" y="58" width="332" height="64" rx="11"></rect>
+        <text class="dg-title" x="758" y="82">Agent process &mdash; run_agent.py</text>
+        <text class="dg-sub" x="758" y="103">sync &middot; storage &middot; notifications &middot; repair</text>
+
+        <path class="dg-edge" stroke-dasharray="4 4" d="M800 124 V146"></path>
+        <text class="dg-sub" x="814" y="140">local pipe</text>
+
+        <rect class="dg-node good" x="740" y="148" width="332" height="52" rx="11"></rect>
+        <text class="dg-title" x="758" y="172">Window process &mdash; run.py</text>
+        <text class="dg-sub" x="758" y="190">viewer and composer only</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <h2 id="split">The two-process split <span class="tag ok">since v3.0.0</span></h2>
+    <p class="sub">
+      The single most important structural decision. The Windows side is two processes with
+      distinct failure domains.
+    </p>
+
+    <div class="diagram" style="margin:26px 0">
+      <svg viewBox="0 0 1100 300" role="img" aria-label="Diagram contrasting the agent process, which owns the network connection, database, notifications, outbox and watchdog, with the window process, which only reads the shared database and submits sends.">
+        <defs>
+          <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#6c74e8"></path>
+          </marker>
+        </defs>
+
+        <!-- agent column -->
+        <rect class="dg-node accent" x="20" y="20" width="470" height="260" rx="14"></rect>
+        <text class="dg-title" x="44" y="52">Agent &mdash; headless QCoreApplication</text>
+        <text class="dg-sub" x="44" y="72">starts at logon &middot; never contains UI code</text>
+
+        <rect class="dg-node" x="44" y="88" width="200" height="46" rx="9"></rect>
+        <text class="dg-sub" x="60" y="108">Socket.IO + HTTP polling</text>
+        <text class="dg-sub" x="60" y="124" opacity=".75">against BlueBubbles</text>
+
+        <rect class="dg-node" x="266" y="88" width="200" height="46" rx="9"></rect>
+        <text class="dg-sub" x="282" y="108">Reconciliation engine</text>
+        <text class="dg-sub" x="282" y="124" opacity=".75">every SQLite write</text>
+
+        <rect class="dg-node" x="44" y="146" width="200" height="46" rx="9"></rect>
+        <text class="dg-sub" x="60" y="166">Notification pipeline</text>
+        <text class="dg-sub" x="60" y="182" opacity=".75">popups, sounds, bell feed</text>
+
+        <rect class="dg-node" x="266" y="146" width="200" height="46" rx="9"></rect>
+        <text class="dg-sub" x="282" y="166">Outbox</text>
+        <text class="dg-sub" x="282" y="182" opacity=".75">survives restarts, offline</text>
+
+        <rect class="dg-node" x="44" y="204" width="200" height="46" rx="9"></rect>
+        <text class="dg-sub" x="60" y="224">Watchdog + Wake Mac</text>
+        <text class="dg-sub" x="60" y="240" opacity=".75">maintenance lease</text>
+
+        <rect class="dg-node" x="266" y="204" width="200" height="46" rx="9"></rect>
+        <text class="dg-sub" x="282" y="224">Pipe server</text>
+        <text class="dg-sub" x="282" y="240" opacity=".75">versioned handshake</text>
+
+        <!-- link -->
+        <path class="dg-flow" d="M494 140 H606" marker-end="url(#a2)"></path>
+        <path class="dg-flow" d="M606 176 H496" marker-end="url(#a2)" opacity=".5"></path>
+        <text class="dg-sub" x="550" y="132" text-anchor="middle">events</text>
+        <text class="dg-sub" x="550" y="196" text-anchor="middle">sends</text>
+
+        <!-- window column -->
+        <rect class="dg-node good" x="612" y="20" width="468" height="260" rx="14"></rect>
+        <text class="dg-title" x="636" y="52">Window &mdash; pure viewer and composer</text>
+        <text class="dg-sub" x="636" y="72">closable &middot; killable &middot; optional</text>
+
+        <rect class="dg-node" x="636" y="88" width="200" height="46" rx="9"></rect>
+        <text class="dg-sub" x="652" y="108">Renders from the</text>
+        <text class="dg-sub" x="652" y="124" opacity=".75">shared database</text>
+
+        <rect class="dg-node" x="858" y="88" width="200" height="46" rx="9"></rect>
+        <text class="dg-sub" x="874" y="108">Submits sends</text>
+        <text class="dg-sub" x="874" y="124" opacity=".75">to the agent</text>
+
+        <rect class="dg-node" x="636" y="146" width="422" height="46" rx="9"></rect>
+        <text class="dg-sub" x="652" y="166">Threads, chat list, composer, settings, notification centre,</text>
+        <text class="dg-sub" x="652" y="182">emoji picker, image viewer, theme</text>
+
+        <rect x="636" y="204" width="422" height="46" rx="9" fill="rgba(62,207,142,.09)" stroke="rgba(62,207,142,.36)" stroke-width="1.3"></rect>
+        <text class="dg-sub" x="652" y="230" fill="#3ecf8e">Close it, crash it, never open it &mdash; collection continues.</text>
+      </svg>
+    </div>
+
+    <div class="prose">
+      <p>
+        The agent is kept alive by three overlapping mechanisms: a supervisor script
+        (<code>agent_supervisor.pyw</code>), a Startup entry created by the installer, and an hourly
+        scheduled-task failsafe. Duplicate launches are harmless by design; a second copy detects
+        the first and exits.
+      </p>
+      <p>
+        Why it matters: before the split, a UI crash or an accidental window close stopped message
+        collection. After it, the pipeline that receives messages contains no UI code at all. It
+        also gives debugging clean lines: <em>&ldquo;the agent recorded it but the window did not show
+        it&rdquo;</em> and <em>&ldquo;the agent never saw it&rdquo;</em> are different investigations.
+      </p>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <h2 id="modules">Module map</h2>
+    <p class="sub" style="margin-bottom:28px">Where each concern lives in the tree.</p>
+
+    <div class="grid g3">
+      <div class="card">
+        <h3><code>app/constants.py</code></h3>
+        <p class="muted" style="margin:0">Version, paths, and every tuning number &mdash; each with a comment explaining the field lesson behind it.</p>
+      </div>
+      <div class="card">
+        <h3><code>app/config.py</code></h3>
+        <p class="muted" style="margin:0">Settings persistence. Secrets go to the OS keyring, never to a file on disk.</p>
+      </div>
+      <div class="card">
+        <h3><code>app/agent/</code></h3>
+        <p class="muted" style="margin:0">The background process: <code>core.py</code> (workers, watchdog, repair), <code>server.py</code> (pipe), <code>policy.py</code>, <code>serialize.py</code>.</p>
+      </div>
+      <div class="card">
+        <h3><code>app/api/</code></h3>
+        <p class="muted" style="margin:0">BlueBubbles REST and Socket.IO clients with typed models.</p>
+      </div>
+      <div class="card">
+        <h3><code>app/store/</code></h3>
+        <p class="muted" style="margin:0">SQLite schema, repository, the reconciliation engine (<code>sync.py</code>, <code>reconcile_core.py</code>), outbox, attachment cache.</p>
+      </div>
+      <div class="card">
+        <h3><code>app/ui/</code></h3>
+        <p class="muted" style="margin:0">The window: main window, thread view, chat list, composer, settings, notification centre, popups, emoji picker, image viewer, theme.</p>
+      </div>
+      <div class="card amber">
+        <h3><code>app/phone/</code></h3>
+        <p class="muted" style="margin:0">The experimental Bluetooth stack: <code>ancs.py</code> (pure protocol) and <code>link.py</code> (discovery, sessions, worker). Quarantined from messaging.</p>
+      </div>
+      <div class="card">
+        <h3><code>app/util/</code></h3>
+        <p class="muted" style="margin:0">Text, time, verification-code extraction, and Windows-specific glue.</p>
+      </div>
+      <div class="card">
+        <h3><code>mac/ tools/ tests/</code></h3>
+        <p class="muted" style="margin:0">Keepalive scripts for the relay Mac; end-to-end harnesses and the startup-launcher builder; the 234-test regression battery.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <h2 id="reconcile">The reconciliation engine</h2>
+    <p class="sub">
+      Push (Socket.IO) is treated as a latency optimisation, never as the source of truth. Truth is
+      established by reconciliation against the Mac&rsquo;s message database, keyed on
+      <code>chat.db</code> ROWIDs, which BlueBubbles exposes as <code>originalROWID</code>.
+    </p>
+
+    <div class="diagram" style="margin:26px 0">
+      <svg viewBox="0 0 1100 320" role="img" aria-label="Diagram of the reconciliation engine: push events arrive opportunistically on top, the cursor walks the ROWID space in fixed windows of one hundred rows in the middle, and a continuous tail audit plus a twenty-four hour deep audit and rolling archive audit run underneath.">
+        <defs>
+          <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#6c74e8"></path>
+          </marker>
+        </defs>
+
+        <!-- lane 1: push -->
+        <text class="dg-label" x="40" y="32">PUSH &mdash; latency optimisation, never truth</text>
+        <path class="dg-edge" stroke-dasharray="5 5" d="M300 44 V92"></path>
+        <path class="dg-edge" stroke-dasharray="5 5" d="M560 44 V92"></path>
+        <path class="dg-edge" stroke-dasharray="5 5" d="M880 44 V92"></path>
+        <circle cx="300" cy="44" r="4" fill="#6c74e8"></circle>
+        <circle cx="560" cy="44" r="4" fill="#6c74e8"></circle>
+        <circle cx="880" cy="44" r="4" fill="#6c74e8"></circle>
+
+        <!-- lane 2: the rowid walk -->
+        <text class="dg-label" x="40" y="86">RECONCILIATION &mdash; fixed ROWID windows, at most 100 rows each</text>
+
+        <rect class="dg-node" x="40" y="98" width="132" height="44" rx="8"></rect>
+        <rect class="dg-node" x="180" y="98" width="132" height="44" rx="8"></rect>
+        <rect class="dg-node" x="320" y="98" width="132" height="44" rx="8"></rect>
+        <rect class="dg-node" x="460" y="98" width="132" height="44" rx="8"></rect>
+        <rect class="dg-node" x="600" y="98" width="132" height="44" rx="8"></rect>
+        <text class="dg-sub" x="106" y="126" text-anchor="middle">committed</text>
+        <text class="dg-sub" x="246" y="126" text-anchor="middle">committed</text>
+        <text class="dg-sub" x="386" y="126" text-anchor="middle">committed</text>
+        <text class="dg-sub" x="526" y="126" text-anchor="middle">committed</text>
+        <text class="dg-sub" x="666" y="126" text-anchor="middle">committed</text>
+
+        <rect class="dg-node accent" x="740" y="98" width="132" height="44" rx="8"></rect>
+        <text class="dg-sub" x="806" y="126" text-anchor="middle" fill="#8f96ff">(cursor, +100]</text>
+
+        <rect x="880" y="98" width="180" height="44" rx="8" fill="none" stroke="#2a3346" stroke-width="1.3" stroke-dasharray="5 4"></rect>
+        <text class="dg-sub" x="970" y="126" text-anchor="middle">not yet walked</text>
+
+        <path class="dg-flow" d="M40 160 H1050" marker-end="url(#a3)"></path>
+        <text class="dg-sub" x="40" y="180">older</text>
+        <text class="dg-sub" x="1010" y="180">newer &rarr;</text>
+        <text class="dg-sub" x="545" y="180" text-anchor="middle">chat.db ROWID &mdash; integral, so a window can never be re-paginated wrongly</text>
+
+        <!-- lane 3: audits -->
+        <rect x="740" y="200" width="320" height="40" rx="9" fill="rgba(62,207,142,.09)" stroke="rgba(62,207,142,.36)" stroke-width="1.3"></rect>
+        <text class="dg-sub" x="900" y="225" text-anchor="middle" fill="#3ecf8e">TAIL AUDIT &mdash; newest 200 rows, re-read continuously</text>
+
+        <rect x="300" y="250" width="760" height="40" rx="9" fill="rgba(224,163,62,.09)" stroke="rgba(224,163,62,.34)" stroke-width="1.3"></rect>
+        <text class="dg-sub" x="680" y="275" text-anchor="middle" fill="#e0a33e">DEEP AUDIT &mdash; 24-hour wall-clock repair window</text>
+
+        <rect x="40" y="250" width="240" height="40" rx="9" fill="rgba(108,116,232,.1)" stroke="rgba(108,116,232,.4)" stroke-width="1.3"></rect>
+        <text class="dg-sub" x="160" y="275" text-anchor="middle" fill="#8f96ff">ROLLING ARCHIVE AUDIT</text>
+
+        <text class="dg-label" x="40" y="312">Nothing reaches you through one path alone.</text>
+      </svg>
+    </div>
+
+    <div class="prose">
+      <ul class="clean">
+        <li><strong>Fixed numeric windows.</strong> The cursor advances through intervals like <code>(cursor, cursor + 100]</code>. Because ROWID is integral, a window holds at most 100 rows and never needs mutable OFFSET pagination, which breaks when rows are inserted mid-walk.</li>
+        <li><strong>Short-read protection.</strong> A transiently incomplete server response is re-checked before a window is committed, so a hiccup cannot become a permanent hole.</li>
+        <li><strong>Tail audit.</strong> The newest 200 rows are re-read continuously; an old-dated message inserted late by iCloud still surfaces.</li>
+        <li><strong>Deep audits.</strong> A 24-hour wall-clock repair window and a rolling archive audit catch anything that slipped past everything else.</li>
+        <li><strong>Gap-fill on reconnect</strong> with a deliberate overlap window, plus a global newest-message safety net that works even if cursors are wrong.</li>
+      </ul>
+      <p>
+        Every constant in this engine lives in <code>app/constants.py</code> with a comment
+        explaining the incident that set its value.
+      </p>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <h2 id="wake">Wake Mac: repairing Apple&rsquo;s idle holding</h2>
+    <div class="prose">
+      <p>
+        The strangest field bug in the project&rsquo;s history: texts existed on the iPhone but never
+        reached the app, and then all appeared the moment a message was sent. Diagnosis (v2.3.0):
+        the delay was upstream of Windows entirely. When Messages.app on the Mac goes idle, Apple
+        can hold fresh messages back from the local database until the app is poked. No amount of
+        Windows-side rescanning can fix that, <strong>because the rows do not exist on the Mac yet.</strong>
+      </p>
+      <p>
+        The cure is to force Messages to reconnect, via BlueBubbles&rsquo;
+        <code>POST /api/v1/mac/imessage/restart</code>. The agent detects the signature of the held
+        state and performs this repair automatically, then verifies that the repair produced rows.
+        A manual Wake&nbsp;Mac button exists too. The <code>mac/</code> keepalive scripts reduce how
+        often the state arises by fighting sleep and App&nbsp;Nap.
+      </p>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <h2 id="notify">Notifications</h2>
+    <p class="sub">
+      Alerting was debugged in the field across the entire 3.1.x series until it earned trust.
+      The resulting rules are pinned by tests:
+    </p>
+    <div class="prose" style="margin-top:22px">
+      <ul class="clean">
+        <li><strong>Sound is decoupled from the popup</strong> and fires first; a popup failure can never silence the sound.</li>
+        <li><strong>Popups fall back to Windows toasts</strong> and vice versa.</li>
+        <li><strong>Storm protection.</strong> A reconnect that back-fills history must not fire a burst of stale alerts. Nothing older than the freshness window ever alerts.</li>
+        <li><strong>A delivery ledger</strong> prevents duplicate alerts across agent restarts; the Test alert deliberately bypasses it.</li>
+        <li><strong>Texts you send to yourself</strong> (a natural way to test the line) alert like any other arrival, while anything sent from this app&rsquo;s own composer never alerts anywhere.</li>
+        <li><strong>Verification codes</strong> are detected, shown prominently, and offered with Copy and Fill buttons. Code-bearing messages also get inline Copy chips in the thread.</li>
+        <li><strong>The bell:</strong> an in-app notification centre recording alerts, link events and repairs, with half-hourly refresh of outage notices.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <h2 id="bluetooth">The experimental Bluetooth stack <span class="tag exp">Experimental</span></h2>
+    <div class="prose">
+      <p>
+        Fully described on the <a href="known-issues.html">known issues</a> page. In one paragraph:
+        <code>app/phone/ancs.py</code> is a pure-protocol implementation of Apple&rsquo;s Notification
+        Center Service, and <code>app/phone/link.py</code> handles the genuinely hard part, which is
+        finding and staying attached to a phone that rotates anonymous Bluetooth addresses and only
+        serves ANCS to connections it trusts. The default flow never pairs; it rides the bond
+        Microsoft Phone Link creates.
+      </p>
+    </div>
+    <div class="callout good" style="margin-top:22px">
+      <h3>Architecturally quarantined</h3>
+      <p style="margin-bottom:0">
+        The agent&rsquo;s messaging pipeline never imports it, Bluetooth modules load lazily, and the whole
+        stack is exercised in tests through fakes &mdash; so the core client builds and runs on machines
+        with no Bluetooth at all.
+      </p>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <h2 id="testing">Testing philosophy</h2>
+    <div class="prose">
+      <p>
+        The battery is the project&rsquo;s institutional memory. The pattern, repeated for three major
+        versions: a field report arrives (often a screenshot and an Activity log), the failure is
+        reproduced in a test, the fix lands, and the test stays forever with a name that tells the
+        story. Suites run headless (<code>QT_QPA_PLATFORM=offscreen</code>, <code>JRL_SMOKE=1</code>)
+        on any OS. Four harnesses in <code>tools/</code> go further, running the pipeline, storm
+        scenarios, an offscreen window, and a live agent process against a mock BlueBubbles server.
+      </p>
+      <p>
+        The consequence for contributors: the tests are not decoration. If your change breaks one,
+        the presumption is that your change re-introduced a bug someone already lived through.
+      </p>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <h2 id="positioning">Positioning: why &ldquo;bring your own Mac&rdquo;</h2>
+    <div class="prose">
+      <p>
+        A structural note for anyone eyeing a fork or a product. A mass-market Windows iMessage
+        client has a two-machine floor (Apple&rsquo;s terms and technical reality both require a real
+        Mac), legal risk on the reverse-engineering path, and poor economics on the cloud-Mac path.
+        The viable niche is exactly what this project is: a premium, reliability-obsessed client for
+        people who own a Mac and need their messages on a PC, with every link under their own control.
+      </p>
+    </div>
+    <div class="cta">
+      <a class="btn primary" href="installation.html">Install it</a>
+      <a class="btn" href="known-issues.html">Known issues</a>
+      <a class="btn" href="faq.html">FAQ</a>
+    </div>
+  </div>
+</section>

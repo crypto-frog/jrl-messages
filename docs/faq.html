@@ -1,0 +1,253 @@
+---
+layout: default
+title: FAQ
+nav: faq
+blurb: Straight answers about the Mac requirement, privacy, features, reliability, setup, and the experimental Bluetooth feature.
+---
+
+<div class="pagehead">
+  <div class="wrap">
+    <span class="eyebrow">Frequently asked questions</span>
+    <h1>Straight answers</h1>
+    <p class="lede">
+      Everything people actually ask before installing this &mdash; including the awkward questions
+      about the second machine, privacy, and what is not finished.
+    </p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+
+    <h2>The basics</h2>
+    <div class="faq" style="margin-top:22px">
+
+      <details class="q" open>
+        <summary>What is JRL Messages, in one sentence?</summary>
+        <div class="qa"><p>A native Windows desktop application (Python 3.12 + PySide6) that gives you full iMessage on a PC &mdash; blue bubbles, group chats, attachments, tapbacks, verification-code popups and desktop notifications &mdash; by relaying through a Mac you own.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>Do I really need a Mac? Is there any way around it?</summary>
+        <div class="qa">
+          <p>Yes, you need one, and no, there is no way around it in this project. The two-machine requirement is <strong>structural, not incidental.</strong> Apple does not make iMessage for Windows, and the alternatives each have a fatal flaw: cloud &ldquo;Mac in the sky&rdquo; services put your Apple ID and every private message on someone else&rsquo;s hardware, and protocol reverse-engineering gets shut down by Apple.</p>
+          <p>This project deliberately does not attempt Apple-protocol reverse engineering, for durability and legal reasons. The honest architecture costs a spare Mac and buys a pipeline you can inspect and repair.</p>
+        </div>
+      </details>
+
+      <details class="q">
+        <summary>Which Mac? Does it have to be new?</summary>
+        <div class="qa"><p>Any Mac that runs a supported macOS, signed into your Apple ID, with Messages working. It stays home and plugged in; lid closed (clamshell) is fine. It is a relay, not a workstation, so an old machine is perfectly reasonable.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>Does the Mac have to stay on all the time?</summary>
+        <div class="qa"><p>Yes. It is the relay: if it is asleep or off, nothing reaches the PC. Sleep, App&nbsp;Nap and Messages.app idling are the main enemies, which is why the <code>mac/</code> folder ships a keepalive installer that hardens the Mac against exactly those, and why the app has an automatic Wake&nbsp;Mac repair.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>Does my iPhone have to be on?</summary>
+        <div class="qa"><p>For iMessage, no &mdash; iMessage does not care where the phone is, because it syncs through Apple&rsquo;s cloud to the Mac. For green-bubble <strong>SMS</strong>, yes: that traffic physically routes through the phone, so it needs power and service somewhere in the world.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>Does it work when I am away from home?</summary>
+        <div class="qa"><p>Yes. That is the point of the Tailscale mesh. The PC can be a laptop anywhere in the world and the Mac is reachable as if it were on the same desk. The same server address works at home, in court, or abroad &mdash; you do not reconfigure anything when you travel.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>What does it cost?</summary>
+        <div class="qa"><p>Nothing, in software. JRL Messages is MIT licensed, BlueBubbles is free and open source, and Tailscale&rsquo;s free tier is sufficient. The real cost is the Mac you have to own.</p></div>
+      </details>
+
+    </div>
+
+    <h2 style="margin-top:56px">Privacy and security</h2>
+    <div class="faq" style="margin-top:22px">
+
+      <details class="q">
+        <summary>Who can read my messages?</summary>
+        <div class="qa"><p>Apple and you. There is no cloud middleman in this design: no Firebase, no Cloudflare tunnel, no third-party relay. BlueBubbles runs in plain LAN URL mode on your Mac, and Tailscale makes that address privately reachable. Every link in the chain is yours to inspect.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>Where is my message data stored, and where does the password go?</summary>
+        <div class="qa">
+          <p>Messages are stored in a SQLite database in your per-user Windows application-data directory &mdash; deliberately separate from the app folder, so upgrading never touches your data. Attachments, config and logs live alongside it.</p>
+          <p>The BlueBubbles server password is stored in <strong>Windows Credential Manager</strong> (via <code>keyring</code>), never in a file.</p>
+        </div>
+      </details>
+
+      <details class="q">
+        <summary>Is Tailscale required, or can I just forward a port?</summary>
+        <div class="qa"><p>Tailscale is the supported path, and it is strongly preferred. It gives the Mac a stable private address reachable from anywhere with no port forwarding and nothing exposed to the public internet. Opening a port on your home router to a server holding your messages is a materially worse security posture.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>I am reporting a bug. What should I redact?</summary>
+        <div class="qa">
+          <p>Your <strong>server address</strong>, above all &mdash; that is your private tailnet hostname. Also blur contact names, phone numbers and message text before attaching a screenshot. Every screenshot on this site has been redacted the same way.</p>
+          <p>Read <a href="https://github.com/crypto-frog/jrl-messages/blob/main/SECURITY.md">SECURITY.md</a> before filing anything that includes logs, and report vulnerabilities <a href="https://github.com/crypto-frog/jrl-messages/security/advisories/new">privately</a>, never as a public issue.</p>
+        </div>
+      </details>
+
+    </div>
+
+    <h2 style="margin-top:56px">Features</h2>
+    <div class="faq" style="margin-top:22px">
+
+      <details class="q">
+        <summary>What can it actually do?</summary>
+        <div class="qa">
+          <ul>
+            <li>Complete history sync, group chats and multi-recipient compose</li>
+            <li>Attachments with EXIF-corrected thumbnails, plus a built-in image viewer</li>
+            <li>Tapback display, an emoji picker, and per-conversation drafts</li>
+            <li>Unread tracking with a clickable pill, and conversation hiding with undo</li>
+            <li>Whole-conversation transcript export to plain text (<code>Ctrl+E</code>)</li>
+            <li>Message search (<code>Ctrl+F</code>)</li>
+            <li>Rich notification popups with <strong>Copy</strong> and <strong>Fill</strong> buttons for verification codes, and an in-app notification centre (the bell)</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="q">
+        <summary>Do I get notifications if the window is closed?</summary>
+        <div class="qa"><p>Yes &mdash; that is the central design decision. The background <strong>agent</strong> owns the connection, the database and the notification pipeline, and it starts at logon whether or not you ever open the window. Closing, or even crashing, the window does not stop messages arriving, being recorded, or raising notifications. There is a setting on the Look tab controlling exactly this: <em>&ldquo;Keep notifications running when I close the window.&rdquo;</em></p></div>
+      </details>
+
+      <details class="q">
+        <summary>What about verification codes?</summary>
+        <div class="qa"><p>They are detected automatically, shown prominently in the popup with <strong>Copy</strong> and <strong>Fill</strong> buttons, and code-bearing messages also get inline Copy chips in the thread. In daily practice this is the single most-used convenience feature.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>Can I run it on more than one PC?</summary>
+        <div class="qa"><p>Each PC runs its own agent and its own local database against the same Mac relay, so yes, more than one machine can connect. Bear in mind each one alerts independently, and each needs Tailscale on the same account.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>Can I change how it looks?</summary>
+        <div class="qa"><p>Yes. Settings &rarr; Look offers a text-size control and sixteen accent tints, from Blue through Graphite. Changes preview live behind the dialog; Save keeps them and Cancel puts everything back.</p></div>
+      </details>
+
+    </div>
+
+    <h2 style="margin-top:56px">Reliability</h2>
+    <div class="faq" style="margin-top:22px">
+
+      <details class="q">
+        <summary>What happens if the Mac goes idle and starts holding messages?</summary>
+        <div class="qa"><p>This is a real Apple behaviour, and it was the strangest bug in the project&rsquo;s history: texts existed on the phone but never arrived, then all appeared the moment you sent something. The agent detects the signature of that held state and performs a verified repair automatically &mdash; restarting the Messages connection on the Mac through BlueBubbles &mdash; then checks that the repair actually produced rows. There is a manual <strong>Wake Mac</strong> button too.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>What if the internet drops, or the agent dies?</summary>
+        <div class="qa"><p>A watchdog rebuilds network workers after repeated failures, and a supervisor restarts a dead agent; a Startup entry and an hourly scheduled-task failsafe back that up. On reconnect the engine gap-fills with a deliberate overlap window. Sends you made while offline sit in an outbox that survives restarts.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>Will a reconnect flood me with old notifications?</summary>
+        <div class="qa"><p>No. Storm protection is explicit: nothing older than the freshness window ever alerts, and a delivery ledger prevents duplicate alerts across agent restarts. This was debugged in the field across the whole 3.1.x series and is pinned by tests.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>How do I know it is actually working?</summary>
+        <div class="qa"><p>The connection indicator in the bottom left: an orbiting arc means connected and checking; a still, broken ring means the chain is down at the Mac or Tailscale layer. For detail, open the <strong>Activity</strong> window, which shows connection attempts, errors, refusals, resets and recoveries as they happen, with a <strong>Copy all</strong> button. The good first test is to send yourself a text &mdash; it should appear and alert like any other arrival.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>How much can I trust this? Is it really tested?</summary>
+        <div class="qa"><p>234 unit tests, all passing, plus four end-to-end harnesses that run the full pipeline against a mock BlueBubbles server. Nearly every field-reported bug in the release notes has a regression test named after it &mdash; the suite is the project&rsquo;s institutional memory rather than decoration.</p></div>
+      </details>
+
+    </div>
+
+    <h2 style="margin-top:56px">Setup and maintenance</h2>
+    <div class="faq" style="margin-top:22px">
+
+      <details class="q">
+        <summary>How long does setup take?</summary>
+        <div class="qa"><p>About five minutes on the iPhone, 30 to 45 minutes on the Mac (once), and 15 minutes on the PC. The <a href="installation.html">installation page</a> gives the order, and <a href="https://github.com/crypto-frog/jrl-messages/blob/main/SETUP.md">SETUP.md</a> is the careful walkthrough written for non-programmers.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>Do I need to know Python?</summary>
+        <div class="qa"><p>No. You install Python 3.12 from python.org and double-click <code>install.bat</code>, which creates a private virtual environment inside the app folder, installs dependencies, registers the background agent and starts it.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>How do I upgrade without losing anything?</summary>
+        <div class="qa"><p>Extract the new version to a <strong>new</strong> folder and run its <code>install.bat</code>. It stops the old agent (even one running from a different folder), installs and starts the new one. Messages and settings carry over automatically because they live in the per-user data directory. Never unzip a new version on top of an old folder. The version in the title bar is the ground truth for what is running.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>How do I stop or remove it?</summary>
+        <div class="qa"><p><code>Stop-Agent.bat</code> pauses background collection until the next logon. <code>Uninstall-Agent.bat</code> removes the startup registration. <code>Agent-Console.bat</code> and <code>Debug-Console.bat</code> run the agent and the window with visible output when you need to troubleshoot.</p></div>
+      </details>
+
+    </div>
+
+    <h2 style="margin-top:56px">The experimental Bluetooth feature</h2>
+    <div class="faq" style="margin-top:22px">
+
+      <details class="q">
+        <summary>What is it, and should I turn it on?</summary>
+        <div class="qa"><p>Since v3.3.0 the app can additionally try to mirror your iPhone&rsquo;s <em>own</em> notification banners (banking apps, calendars, other messengers) to the PC over Bluetooth LE using Apple&rsquo;s ANCS. <strong>Honest status: it sometimes works and most of the time it does not.</strong> It is off by default. Do not rely on it; keep Microsoft Phone Link as the fallback for those banners.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>Does that unreliability affect my messages?</summary>
+        <div class="qa"><p>No, and this is worth being precise about. iMessage and SMS travel over the Mac relay and involve <strong>no Bluetooth whatsoever.</strong> The stack is architecturally quarantined: the messaging pipeline never imports it, the modules load lazily, and the app runs fine on a PC with no Bluetooth hardware at all.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>Why is it so hard? Can I help?</summary>
+        <div class="qa"><p>Five difficulties stack: the phone rotates anonymous addresses, Windows answers per-address pairing questions wrongly, ANCS appears and disappears, the Windows GATT cache goes stale, and iOS pairing is hostile to third parties. The <a href="known-issues.html">known issues page</a> sets all of it out, along with the decisive experiment that would settle the current open question. Field reports are the most valuable contribution, and there is a dedicated issue template for them.</p></div>
+      </details>
+
+    </div>
+
+    <h2 style="margin-top:56px">The project</h2>
+    <div class="faq" style="margin-top:22px">
+
+      <details class="q">
+        <summary>Who made this, and is it a supported product?</summary>
+        <div class="qa"><p>It was built by a practicing lawyer for one reason: not missing a message matters. It is an open-source project, not a commercial product, and it comes with no support guarantee &mdash; but it is used daily by its author, which is why the failure reporting is so blunt.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>What licence is it under?</summary>
+        <div class="qa"><p><a href="https://github.com/crypto-frog/jrl-messages/blob/main/LICENSE">MIT</a>.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>Is this affiliated with Apple, or against Apple&rsquo;s terms?</summary>
+        <div class="qa"><p>Not affiliated with Apple in any way; iMessage is Apple&rsquo;s trademark. The design deliberately stays on the supported side of the line: messages flow through a real Mac signed into your own Apple ID running Messages.app normally. Nothing here impersonates Apple&rsquo;s protocol &mdash; that path was rejected explicitly, for durability and legal reasons.</p></div>
+      </details>
+
+      <details class="q">
+        <summary>How do I contribute, and what is most useful?</summary>
+        <div class="qa">
+          <p>Issues and pull requests are welcome. Bug reports with the app version (title bar), the Activity log (<strong>Copy all</strong>) and a screenshot are gold; the issue templates walk you through it. The most valuable contribution by far is a Bluetooth pairing report, because that data directly advances the hardest open problem.</p>
+          <p>Read <a href="https://github.com/crypto-frog/jrl-messages/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a> for the workflow and the pinned invariants &mdash; behaviours that must never regress.</p>
+        </div>
+      </details>
+
+      <details class="q">
+        <summary>Why are the release notes so long and so candid?</summary>
+        <div class="qa"><p>The <code>RELEASE-NOTES-*.txt</code> files are preserved verbatim from private development, written release by release as field reports came in. Each one names what broke, what the screenshot or log proved, and what was pinned so it cannot break again. Read 3.3.0 through 3.5.3 in order and you have a complete field diary of the Bluetooth campaign.</p></div>
+      </details>
+
+    </div>
+
+    <div class="callout" style="margin-top:48px">
+      <h3>Question not answered here?</h3>
+      <p style="margin-bottom:0">
+        Open an issue &mdash; genuinely, including &ldquo;the docs did not explain X&rdquo;.
+        <a href="https://github.com/crypto-frog/jrl-messages/issues/new/choose">File it on GitHub &rarr;</a>
+      </p>
+    </div>
+
+  </div>
+</section>

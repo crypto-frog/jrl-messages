@@ -1,0 +1,282 @@
+---
+layout: default
+title: JRL Messages
+nav: overview
+blurb: Full iMessage on a Windows PC, relayed through a Mac you own over a private Tailscale mesh. Built so a message is never silently missed.
+---
+
+<div class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Windows desktop client &middot; version 3.6.0</span>
+    <h1>Full iMessage on Windows, built so a message is <span class="grad">never silently missed</span>.</h1>
+    <p class="lede">
+      Blue bubbles, group chats, attachments, verification-code popups and real desktop
+      notifications &mdash; relayed through a Mac you own, over a private network only you can see.
+      No cloud middleman ever holds your messages.
+    </p>
+    <p class="sub">
+      It was built by a practicing lawyer with exactly one requirement: <strong>never miss a message.</strong>
+      Every design decision on this site follows from that sentence.
+    </p>
+
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/crypto-frog/jrl-messages/releases/latest">Download v3.6.0</a>
+      <a class="btn" href="installation.html">Installation guide</a>
+      <a class="btn" href="architecture.html">How it works</a>
+    </div>
+
+    <div class="pillrow" style="margin-top:34px">
+      <span class="pill"><span class="dot"></span>Agent keeps running with the window closed</span>
+      <span class="pill">234 regression tests</span>
+      <span class="pill">Python 3.12 + PySide6</span>
+      <span class="pill">MIT licensed</span>
+    </div>
+  </div>
+</div>
+
+<section class="tight">
+  <div class="wrap">
+    <figure class="shot">
+      <img src="assets/img/main-window.png" alt="The JRL Messages main window: conversation list on the left with a live connection indicator, message thread with read receipts on the right." width="1283" height="810">
+      <figcaption>
+        <b>The main window.</b> Conversation list, threaded view with delivery and read receipts, and the
+        connection indicator, Hidden, Recover and Wake&nbsp;Mac controls along the bottom left.
+      </figcaption>
+    </figure>
+    <p style="margin-top:18px">
+      <span class="redact-note"><span class="sq"></span> Contact names, numbers and message text are redacted in every screenshot on this site.</span>
+    </p>
+  </div>
+</section>
+
+<section class="tight">
+  <div class="wrap">
+    <div class="stats">
+      <div class="stat"><b>234</b><span>regression tests, nearly all pinning a real bug</span></div>
+      <div class="stat"><b>2</b><span>processes, with separate failure domains</span></div>
+      <div class="stat"><b>0</b><span>third parties who can read your messages</span></div>
+      <div class="stat"><b>3</b><span>overlapping mechanisms keeping the agent alive</span></div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <span class="eyebrow">The structure</span>
+    <h2>The whole chain, end to end</h2>
+    <p class="sub" style="margin-bottom:28px">
+      Your Mac stays home, signed into your Apple ID, acting as a relay you control end to end.
+      Your PC &mdash; a laptop, anywhere in the world &mdash; runs two cooperating processes.
+    </p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 1100 250" role="img" aria-label="Diagram: iPhone syncs to Apple's cloud, which syncs to a Mac running Messages and the BlueBubbles server. A Tailscale WireGuard mesh links that Mac privately to a Windows PC, which runs a headless agent process and a separate window process.">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#6c74e8"></path>
+          </marker>
+          <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#2a3346"></path>
+          </marker>
+        </defs>
+
+        <!-- iPhone -->
+        <rect class="dg-node" x="10" y="82" width="118" height="76" rx="12"></rect>
+        <text class="dg-title" x="69" y="112" text-anchor="middle">iPhone</text>
+        <text class="dg-sub" x="69" y="132" text-anchor="middle">nothing installed</text>
+
+        <path class="dg-flow" d="M132 120 H160" marker-end="url(#ar)"></path>
+
+        <!-- Apple cloud -->
+        <rect class="dg-node" x="166" y="82" width="136" height="76" rx="12"></rect>
+        <text class="dg-title" x="234" y="112" text-anchor="middle">Apple&rsquo;s cloud</text>
+        <text class="dg-sub" x="234" y="132" text-anchor="middle">Apple&rsquo;s own sync</text>
+
+        <path class="dg-flow" d="M306 120 H336" marker-end="url(#ar)"></path>
+
+        <!-- Mac -->
+        <rect class="dg-node accent" x="342" y="62" width="198" height="116" rx="13"></rect>
+        <text class="dg-title" x="441" y="90" text-anchor="middle">Mac at home</text>
+        <text class="dg-sub" x="441" y="112" text-anchor="middle">Messages.app &middot; chat.db</text>
+        <text class="dg-sub" x="441" y="130" text-anchor="middle">BlueBubbles server</text>
+        <text class="dg-sub" x="441" y="152" text-anchor="middle">REST + Socket.IO</text>
+
+        <!-- Tailscale tunnel -->
+        <path class="dg-flow" d="M544 110 H700" marker-end="url(#ar)"></path>
+        <path class="dg-flow" d="M700 134 H548" marker-end="url(#ar)" opacity=".55"></path>
+        <rect x="566" y="46" width="112" height="26" rx="8" fill="rgba(62,207,142,.1)" stroke="rgba(62,207,142,.36)" stroke-width="1.2"></rect>
+        <text class="dg-sub" x="622" y="63" text-anchor="middle" fill="#3ecf8e">TAILSCALE</text>
+        <text class="dg-sub" x="622" y="168" text-anchor="middle">private WireGuard mesh</text>
+        <text class="dg-sub" x="622" y="186" text-anchor="middle">no port forwarding</text>
+
+        <!-- Windows PC -->
+        <rect class="dg-node" x="706" y="20" width="384" height="210" rx="14"></rect>
+        <text class="dg-label" x="726" y="45">WINDOWS PC &mdash; anywhere in the world</text>
+
+        <rect class="dg-node accent" x="724" y="58" width="348" height="72" rx="11"></rect>
+        <text class="dg-title" x="742" y="84">Agent process &mdash; headless, starts at logon</text>
+        <text class="dg-sub" x="742" y="104">sync &middot; SQLite &middot; outbox &middot; notifications</text>
+        <text class="dg-sub" x="742" y="120">watchdog &middot; Wake Mac repair</text>
+
+        <path class="dg-edge" stroke-dasharray="4 4" d="M780 132 V150" marker-end="url(#ar2)"></path>
+        <text class="dg-sub" x="794" y="147">local pipe</text>
+
+        <rect class="dg-node good" x="724" y="152" width="348" height="62" rx="11"></rect>
+        <text class="dg-title" x="742" y="178">Window process &mdash; pure viewer and composer</text>
+        <text class="dg-sub" x="742" y="198">close it, or crash it: messages keep arriving</text>
+      </svg>
+    </div>
+
+    <div class="grid g3" style="margin-top:22px">
+      <div class="card">
+        <h3>Own every link</h3>
+        <p class="muted" style="margin:0">No Firebase, no Cloudflare tunnel, no third-party relay. BlueBubbles runs in plain LAN URL mode; Tailscale makes that address privately reachable from anywhere.</p>
+      </div>
+      <div class="card">
+        <h3>Buy what shifts, build what is rare</h3>
+        <p class="muted" style="margin:0">macOS changes constantly, so talking to Messages.app is delegated to BlueBubbles, whose whole job is tracking those changes. The unusual part &mdash; an aggressively complete Windows client &mdash; is custom.</p>
+      </div>
+      <div class="card">
+        <h3>Two failure domains</h3>
+        <p class="muted" style="margin:0">The pipeline that receives messages contains no UI code at all. A crash in the window cannot stop collection, and the two are debugged separately.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <span class="eyebrow">Why this shape</span>
+    <h2>Why not the alternatives</h2>
+    <div class="grid g3" style="margin-top:26px">
+      <div class="card amber">
+        <h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 2 3 7v6c0 5 4 8 9 9 5-1 9-4 9-9V7z"></path><path d="M9 12l2 2 4-4"></path></svg></span>Cloud Mac rentals</h3>
+        <p class="muted" style="margin:0">Services that rent you a Mac in a data centre hold your Apple ID and every message on hardware you cannot inspect. You are trusting a stranger with your entire message history.</p>
+      </div>
+      <div class="card amber">
+        <h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M4 4l16 16M20 4L4 20"></path></svg></span>Protocol reverse engineering</h3>
+        <p class="muted" style="margin:0">Clients that impersonate Apple&rsquo;s protocol get shut down. They are exciting for a season and then they stop working, usually without warning.</p>
+      </div>
+      <div class="card amber">
+        <h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 5h18v12H3z"></path><path d="M8 21h8"></path></svg></span>Microsoft Phone Link</h3>
+        <p class="muted" style="margin:0">The built-in iMessage bridge is shallow: no history, weak group support, and silent gaps. Fine as a notification fallback; not something to run a practice on.</p>
+      </div>
+    </div>
+    <p class="sub" style="margin-top:26px">
+      The two-machine design is the honest architecture. It costs a spare Mac; it buys a private,
+      inspectable, repairable message pipeline.
+    </p>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <span class="eyebrow">Reliability engineering</span>
+    <h2>What makes it dependable</h2>
+    <p class="sub" style="margin-bottom:28px">
+      Push notification is treated as a latency optimisation, never as the source of truth.
+      Truth is established by reconciliation against the Mac&rsquo;s own message database.
+    </p>
+
+    <div class="grid g3">
+      <div class="card">
+        <h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"></path></svg></span>Reconciliation engine</h3>
+        <p class="muted" style="margin:0">Walks the Mac&rsquo;s database in fixed ROWID windows, with short-read protection, a continuous tail audit, a 24-hour wall-clock repair pass and a rolling archive audit. Late-inserted iCloud messages cannot create a silent gap.</p>
+      </div>
+      <div class="card green">
+        <h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"></path></svg></span>Wake Mac</h3>
+        <p class="muted" style="margin:0">Automatic, verified repair of Apple&rsquo;s idle-holding behaviour, where Messages.app quietly delays handing over new texts until it is poked. Detected, repaired, then checked that the repair actually produced rows.</p>
+      </div>
+      <div class="card green">
+        <h3><span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span>Stays alive by itself</h3>
+        <p class="muted" style="margin:0">A watchdog, a supervisor script, a Startup entry and an hourly scheduled-task failsafe. Duplicate launches are harmless by design: a second copy detects the first and exits.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"></path><path d="M10 21h4"></path></svg></span>Alerting that earned trust</h3>
+        <p class="muted" style="margin:0">Sound is decoupled from the popup and fires first. Storm protection stops a reconnect back-fill from firing a burst of stale alerts. A delivery ledger prevents duplicates across restarts.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ico"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M9 12h6M9 16h6M9 8h6"></path></svg></span>Verification codes</h3>
+        <p class="muted" style="margin:0">Detected, shown prominently, and offered with Copy and Fill buttons, plus inline Copy chips in the thread. The single most-used convenience feature in daily practice.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ico"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"></path></svg></span>Tests as memory</h3>
+        <p class="muted" style="margin:0">234 unit tests and four end-to-end harnesses. The pattern repeats: a field report arrives, the failure is reproduced in a test, the fix lands, and the test stays forever with a name that tells the story.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <span class="eyebrow">The application</span>
+    <h2>What it looks like in use</h2>
+    <p class="sub" style="margin-bottom:30px">
+      Every screenshot below is from a real installation, with names, numbers, message text,
+      the private server address and the phone&rsquo;s Bluetooth identifier permanently removed.
+    </p>
+
+    <div class="grid g2">
+      <figure class="shot">
+        <img src="assets/img/settings-connection.png" alt="The Settings dialog, Connection tab, showing the server URL field (redacted), password field, and an Auto Wake Mac setting, with the main window behind it in the green theme." width="1884" height="1010" loading="lazy">
+        <figcaption><b>Settings &rarr; Connection.</b> The Mac&rsquo;s address and server password, the Auto Wake Mac interval, and a Test connection button. The password is stored in Windows Credential Manager, never in a file. Changes preview live behind the dialog.</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="assets/img/activity-log.png" alt="The Activity window showing a live log of connection status, automatic wake events and phone link events with timestamps." width="992" height="750" loading="lazy">
+        <figcaption><b>The Activity window.</b> Connection attempts, errors, refusals, resets and recoveries as they happen, with a Copy&nbsp;all button. This log is the first thing to attach to a bug report.</figcaption>
+      </figure>
+    </div>
+
+    <figure class="shot" style="margin-top:18px">
+      <img src="assets/img/settings-look.png" alt="The Settings dialog, Look tab, offering a text size control and sixteen accent colour choices from Blue through Graphite." width="1206" height="704" loading="lazy">
+      <figcaption><b>Settings &rarr; Look.</b> Text size, sixteen accent tints, help-tip control, and the close-button behaviour that keeps notifications running when the window is shut. Every change previews live before you commit it.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<hr class="rule">
+
+<section>
+  <div class="wrap">
+    <div class="callout warn">
+      <h3>Honest limits <span class="tag exp">Experimental</span></h3>
+      <p>
+        One feature is explicitly unreliable today: mirroring the iPhone&rsquo;s <em>own</em> notification
+        banners (from other apps) to the PC over Bluetooth. It sometimes works and usually does not,
+        for deep reasons set out on the known issues page.
+      </p>
+      <p style="margin-bottom:0">
+        It is off by default and completely separate from messaging.
+        <strong>iMessage itself never touches Bluetooth and works regardless</strong> &mdash; the app runs
+        fine on a PC with no Bluetooth hardware at all. This is the project&rsquo;s main open problem and
+        the most valuable place to contribute.
+        <a href="known-issues.html">Read the full analysis &rarr;</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="tight">
+  <div class="wrap">
+    <div class="grid g2">
+      <div class="card">
+        <h3>Still have questions?</h3>
+        <p class="muted">Do you really need a Mac? Does it work abroad? What happens when the Mac sleeps? Who can read your messages? Answered plainly, in one place.</p>
+        <a class="btn" href="faq.html" style="margin-top:6px">Read the FAQ</a>
+      </div>
+      <div class="card">
+        <h3>Get involved</h3>
+        <p class="muted">Field reports, code, and Mac-side hardening are all welcome. Bug reports with a version number, an Activity log and a screenshot have driven every fix in this project&rsquo;s history.</p>
+        <a class="btn" href="https://github.com/crypto-frog/jrl-messages/issues" style="margin-top:6px">Open an issue</a>
+      </div>
+    </div>
+  </div>
+</section>

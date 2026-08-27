@@ -8,6 +8,12 @@ It was built by a practicing lawyer for one reason: **not missing a message matt
 
 Current release: **v3.6.0**. Test suite: **234 unit tests, all passing**, plus four end-to-end harnesses.
 
+**[Documentation, screenshots and diagrams &rarr;](https://crypto-frog.github.io/jrl-messages/)**
+
+![The JRL Messages main window: conversation list, threaded view with read receipts, and the connection indicator](docs/assets/img/main-window.png)
+
+<sub>Contact names, numbers and message text are redacted in every screenshot.</sub>
+
 ---
 
 ## Why this exists
@@ -45,7 +51,7 @@ The Windows side is split into **two processes** (since v3.0.0):
 
 This separation is the heart of the reliability story: the pipeline that receives your messages has no UI code in its failure domain.
 
-Full detail: [docs/architecture.md](docs/architecture.md)
+Full detail: [the architecture page](https://crypto-frog.github.io/jrl-messages/architecture.html)
 
 ## What you need
 
@@ -90,7 +96,7 @@ Since v3.3.0 the app can additionally mirror your iPhone's own notification bann
 - It **does not** affect messaging at all. Message sync, sending, receiving, notifications for iMessage and SMS, history, and every core feature travel over the Mac relay path, which has nothing to do with Bluetooth. The app is a complete, dependable iMessage client with this feature turned off, and it ships off by default.
 - It **does** mean you cannot yet count on seeing your iPhone's other notifications (banking apps, calendars, third-party messengers) mirrored on the PC. For those, Microsoft Phone Link itself remains the fallback.
 
-Deep technical write-up and contribution guide: [docs/known-issues.md](docs/known-issues.md)
+Deep technical write-up and contribution guide: [the known-issues page](https://crypto-frog.github.io/jrl-messages/known-issues.html)
 
 ### Other limits
 
